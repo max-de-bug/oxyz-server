@@ -84,8 +84,22 @@ export class CloudinaryService {
   /**
    * Delete a file from Cloudinary
    */
-  async deleteFile(publicId: string): Promise<any> {
-    return cloudinary.uploader.destroy(publicId);
+  async deleteFile(publicId: string): Promise<CloudinaryResponse> {
+    try {
+      // Ensure the publicId includes the folder name if not already present
+      const fullPublicId = publicId.startsWith('images/')
+        ? publicId
+        : `images/${publicId}`;
+      console.log('Deleting from Cloudinary with publicId:', fullPublicId); // Debug log
+
+      const result = await cloudinary.uploader.destroy(fullPublicId);
+      console.log('Cloudinary delete result:', result); // Debug log
+
+      return result;
+    } catch (error) {
+      console.error('Error in deleteFile:', error);
+      throw error;
+    }
   }
 
   /**

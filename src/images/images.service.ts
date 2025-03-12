@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   ForbiddenException,
+  BadRequestException,
 } from '@nestjs/common';
 import { DrizzleService } from '../drizzle/drizzle.service';
 import { CloudinaryService } from '../cloudinary/cloudinary.service';
@@ -10,13 +11,36 @@ import { UpdateImageDto } from './dto/update-image.dto';
 import { images } from '../drizzle/schema';
 import { eq, and, inArray } from 'drizzle-orm';
 import { v4 as uuidv4 } from 'uuid';
-
+import cloudinary from 'cloudinary';
+import { CloudinaryResponse } from '../cloudinary/cloudinary-response';
 @Injectable()
 export class ImagesService {
   constructor(
     private drizzle: DrizzleService,
     private cloudinary: CloudinaryService,
   ) {}
+
+  async uploadImage(file: Express.Multer.File) {
+    try {
+      if (!file) {
+        throw new BadRequestException('No file provided');
+      }
+
+      // Convert buffer to base64
+      const b64 = Buffer.from(file.buffer).toString('base64');
+      // Upload to Cloudinary
+      const result = await this.cloudinary.uploadFile(file, 'images');
+
+      return {
+        id: result.public_id,
+        url: result.secure_url,
+        filename: file.originalname,
+      };
+    } catch (error) {
+      console.error('Error uploading to Cloudinary:', error);
+      throw new BadRequestException('Failed to upload image');
+    }
+  }
 
   async findAll(userId: string, tags?: string[]) {
     const results = await this.drizzle.db
@@ -87,19 +111,70 @@ export class ImagesService {
     return this.findOne(id, userId);
   }
 
-  async remove(id: string, userId: string) {
-    const image = await this.findOne(id, userId);
+  async deleteFromCloudinary(publicId: string) {
+    try {
+      // Ensure we're using the full path including the folder
+      const fullPublicId = publicId.startsWith('images/')
+        ? publicId
+        : `images/${publicId}`;
+      console.log('Attempting to delete from Cloudinary:', fullPublicId); // Debug log
 
-    // Delete from Cloudinary
-    if (image.publicId) {
-      await this.cloudinary.deleteFile(image.publicId);
+      const result = await this.cloudinary.deleteFile(fullPublicId);
+
+      if (!result) {
+        console.error('Cloudinary deletion failed:', result);
+        throw new BadRequestException('Failed to delete image from Cloudinary');
+      }
+
+      return { success: true, message: 'Image deleted successfully' };
+    } catch (error) {
+      console.error('Error deleting from Cloudinary:', error);
+      if (error.http_code === 404) {
+        throw new NotFoundException('Image not found in Cloudinary');
+      }
+      throw new BadRequestException(
+        `Failed to delete image from Cloudinary: ${error.message || 'Unknown error'}`,
+      );
     }
+  }
 
-    await this.drizzle.db
-      .delete(images)
-      .where(and(eq(images.id, id), eq(images.userId, userId)));
+  async remove(id: string, userId: string, source?: string) {
+    try {
+      console.log('Deleting image:', { id, userId, source }); // Debug log
 
-    return { success: true };
+      if (source === 'cloudinary') {
+        // For Cloudinary source, ensure we have the correct folder structure
+        return this.deleteFromCloudinary(id);
+      }
+
+      // If not Cloudinary, proceed with normal deletion
+      const image = await this.findOne(id, userId);
+
+      // Delete from Cloudinary if we have a publicId
+      if (image.publicId) {
+        try {
+          await this.cloudinary.deleteFile(image.publicId);
+        } catch (cloudinaryError) {
+          console.error('Error deleting from Cloudinary:', cloudinaryError);
+          // Continue with database deletion even if Cloudinary deletion fails
+        }
+      }
+
+      // Delete from database
+      await this.drizzle.db
+        .delete(images)
+        .where(and(eq(images.id, id), eq(images.userId, userId)));
+
+      return { success: true, message: 'Image deleted successfully' };
+    } catch (error) {
+      console.error('Error in remove:', error);
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new BadRequestException(
+        `Failed to delete image: ${error.message || 'Unknown error'}`,
+      );
+    }
   }
 
   /**

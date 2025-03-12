@@ -11,6 +11,9 @@ import {
   Query,
   UseGuards,
   Req,
+  MaxFileSizeValidator,
+  FileTypeValidator,
+  ParseFilePipe,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ImagesService } from './images.service';
@@ -50,28 +53,32 @@ export class ImagesController {
     return this.imagesService.findOneFromCloudinary(publicId, userId);
   }
 
-  @Post()
-  @UseInterceptors(
-    FileInterceptor('file', {
-      storage: diskStorage({
-        destination: './uploads/images',
-        filename: (req, file, cb) => {
-          const uniqueSuffix = uuidv4();
-          const ext = extname(file.originalname);
-          cb(null, `${uniqueSuffix}${ext}`);
-        },
+  @Delete(':id')
+  async remove(
+    @Param('id') id: string,
+    @Query('source') source: string,
+    @Req() req,
+  ) {
+    const userId = req.user?.id;
+    return this.imagesService.remove(id, userId, source);
+  }
+
+  @Post('upload')
+  @UseInterceptors(FileInterceptor('file'))
+  async uploadImage(
+    @UploadedFile(
+      new ParseFilePipe({
+        validators: [
+          new MaxFileSizeValidator({ maxSize: 5 * 1024 * 1024 }), // 5MB
+          new FileTypeValidator({ fileType: '.(png|jpeg|jpg)' }),
+        ],
       }),
-      limits: {
-        fileSize: 10 * 1024 * 1024, // 10MB
-      },
-      fileFilter: (req, file, cb) => {
-        if (!file.mimetype.match(/\/(jpg|jpeg|png|gif|webp)$/)) {
-          return cb(new Error('Only image files are allowed!'), false);
-        }
-        cb(null, true);
-      },
-    }),
-  )
+    )
+    file: Express.Multer.File,
+  ) {
+    return this.imagesService.uploadImage(file);
+  }
+
   async create(
     @UploadedFile() file: Express.Multer.File,
     @Body() createImageDto: CreateImageDto,
@@ -89,11 +96,5 @@ export class ImagesController {
   ) {
     const userId = req.user.id;
     return this.imagesService.update(id, updateImageDto, userId);
-  }
-
-  @Delete(':id')
-  async remove(@Param('id') id: string, @Req() req) {
-    const userId = req.user.id;
-    return this.imagesService.remove(id, userId);
   }
 }
