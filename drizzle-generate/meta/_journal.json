@@ -64,6 +64,13 @@
       "when": 1741764021969,
       "tag": "0008_strong_sebastian_shaw",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1742726871447,
+      "tag": "0009_glossy_ricochet",
+      "breakpoints": true
     }
   ]
 }

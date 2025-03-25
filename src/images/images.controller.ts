@@ -19,13 +19,10 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { ImagesService } from './images.service';
 import { CreateImageDto } from './dto/create-image.dto';
 import { UpdateImageDto } from './dto/update-image.dto';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { diskStorage } from 'multer';
-import { extname } from 'path';
-import { v4 as uuidv4 } from 'uuid';
+import { SupabaseAuthGuard } from 'src/auth/guards/auth.guard';
 
 @Controller('images')
-@UseGuards(JwtAuthGuard)
+@UseGuards(SupabaseAuthGuard)
 export class ImagesController {
   constructor(private readonly imagesService: ImagesService) {}
 

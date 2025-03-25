@@ -19,11 +19,11 @@ import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { DesignsService } from './designs.service';
 import { CreateDesignDto } from './dto/create-design.dto';
 import { UpdateDesignDto } from './dto/update-design.dto';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CloudinaryService } from '../cloudinary/cloudinary.service';
+import { SupabaseAuthGuard } from 'src/auth/guards/auth.guard';
 
 @Controller('designs')
-@UseGuards(JwtAuthGuard) // Apply JWT guard to all routes by default
+@UseGuards(SupabaseAuthGuard) // Apply JWT guard to all routes by default
 export class DesignsController {
   constructor(
     private readonly designsService: DesignsService,

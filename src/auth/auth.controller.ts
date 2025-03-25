@@ -1,6 +1,6 @@
 import { Controller, Post, Body, Get, UseGuards, Req } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { SupabaseAuthGuard } from './guards/auth.guard';
 
 @Controller('auth')
 export class AuthController {
@@ -33,7 +33,7 @@ export class AuthController {
     return this.authService.handleDiscordCallback(discordUser);
   }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(SupabaseAuthGuard)
   @Get('profile')
   getProfile(@Req() req) {
     console.log('Auth Controller - Profile request for user:', req.user);

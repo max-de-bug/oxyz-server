@@ -1,10 +1,10 @@
 import { Controller, Get, Param, UseGuards, Req, Query } from '@nestjs/common';
 import { CloudinaryService } from './cloudinary.service';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CloudinaryResponse } from './interfaces/cloudinary.interfaces';
+import { SupabaseAuthGuard } from 'src/auth/guards/auth.guard';
 
 @Controller('cloudinary')
-@UseGuards(JwtAuthGuard)
+@UseGuards(SupabaseAuthGuard)
 export class CloudinaryController {
   constructor(private readonly cloudinaryService: CloudinaryService) {}
 

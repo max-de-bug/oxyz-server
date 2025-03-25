@@ -11,13 +11,19 @@ import {
   Query,
 } from '@nestjs/common';
 import { PresetsService } from './presets.service';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { Public, SupabaseAuthGuard } from 'src/auth/guards/auth.guard';
 
 @Controller('presets')
-@UseGuards(JwtAuthGuard)
+@UseGuards(SupabaseAuthGuard)
 export class PresetsController {
   constructor(private readonly presetsService: PresetsService) {}
+
+  @Public()
+  @Get('public-presets')
+  getPublicPresets() {
+    // ...
+  }
 
   @Get()
   @ApiOperation({ summary: 'Get all presets for the current user' })

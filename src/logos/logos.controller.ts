@@ -16,15 +16,15 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { LogosService } from './logos.service';
 import { CreateLogoDto } from './dto/create-logo.dto';
 import { UpdateLogoDto } from './dto/update-logo.dto';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import multer from 'multer';
 
 import { diskStorage } from 'multer';
 import { extname } from 'path';
 import { v4 as uuidv4 } from 'uuid';
+import { SupabaseAuthGuard } from 'src/auth/guards/auth.guard';
 
 @Controller('logos')
-@UseGuards(JwtAuthGuard)
+@UseGuards(SupabaseAuthGuard)
 export class LogosController {
   constructor(private readonly logosService: LogosService) {}
 
@@ -111,5 +111,10 @@ export class LogosController {
   async setDefault(@Param('id') id: string, @Req() req) {
     const userId = req.user.id;
     return this.logosService.setDefault(id, userId);
+  }
+
+  @Get('public')
+  getPublicLogos() {
+    // Implementation
   }
 }

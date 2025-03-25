@@ -1,27 +1,30 @@
 import { Module } from '@nestjs/common';
 import { PassportModule } from '@nestjs/passport';
-import { JwtModule } from '@nestjs/jwt';
-import { ConfigService } from '@nestjs/config';
-import { JwtStrategy } from './strategies/jwt.strategy';
-
+import { ConfigModule } from '@nestjs/config';
+import { APP_GUARD } from '@nestjs/core';
 import { UsersModule } from '../users/users.module';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
+import { DrizzleModule } from '../drizzle/drizzle.module';
+import { SupabaseStrategy } from './strategies/supabase.strategy';
+import { SupabaseAuthGuard } from './guards/auth.guard';
 
 @Module({
   imports: [
-    PassportModule,
+    ConfigModule,
+    PassportModule.register({ defaultStrategy: 'supabase' }),
     UsersModule,
-    JwtModule.registerAsync({
-      inject: [ConfigService],
-      useFactory: (configService: ConfigService) => ({
-        secret: configService.get<string>('JWT_SECRET') || 'your-secret-key',
-        signOptions: { expiresIn: '1d' },
-      }),
-    }),
+    DrizzleModule,
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy],
-  exports: [AuthService, JwtStrategy, PassportModule],
+  providers: [
+    AuthService,
+    SupabaseStrategy,
+    {
+      provide: APP_GUARD,
+      useClass: SupabaseAuthGuard,
+    },
+  ],
+  exports: [AuthService],
 })
 export class AuthModule {}
