@@ -526,20 +526,39 @@ export class CloudinaryService {
    * Delete a user's resource
    * @param publicId The public ID of the resource to delete
    * @param userId The user ID
+   * @param folder
    * @returns Promise with the deletion result
    */
-  async deleteUserResource(publicId: string, userId: string): Promise<boolean> {
+  async deleteUserResource(
+    publicId: string,
+    userId: string,
+    folder,
+  ): Promise<boolean> {
     try {
+      // Create the expected folder pattern for this user
+      const userFolderPattern = `users/${userId}/${folder}`;
+
       // Verify the resource belongs to the user
-      if (!publicId.includes(`users/${userId}/`)) {
+      if (!publicId.includes(userFolderPattern)) {
         throw new BadRequestException('Unauthorized to delete this resource');
       }
 
+      console.log(`Attempting to delete Cloudinary resource: ${publicId}`);
       const result = await cloudinary.uploader.destroy(publicId);
-      return result.result === 'ok';
+
+      if (result.result !== 'ok') {
+        console.error('Cloudinary deletion failed:', result);
+        throw new BadRequestException(
+          `Cloudinary deletion failed: ${result.result}`,
+        );
+      }
+
+      return true;
     } catch (error) {
       console.error('Error deleting resource:', error);
-      throw new BadRequestException('Failed to delete resource');
+      throw new BadRequestException(
+        `Failed to delete resource: ${error.message}`,
+      );
     }
   }
 }
