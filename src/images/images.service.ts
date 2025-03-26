@@ -214,39 +214,55 @@ export class ImagesService {
     return this.findOne(id, userId);
   }
 
-  async deleteImage(publicId: string, userId: string) {
+  async deleteImage(
+    publicId: string,
+    userId: string,
+    folder: string = 'images',
+  ) {
     try {
+      console.log(
+        `Deleting image: ${publicId} from folder ${folder} for user ${userId}`,
+      );
+
       // Delete from Cloudinary
-      await this.cloudinaryService.deleteUserResource(publicId, userId);
+      await this.cloudinaryService.deleteUserResource(publicId, userId, folder);
 
-      // Delete from database
-      await this.drizzle.db
-        .delete(images)
-        .where(and(eq(images.public_id, publicId), eq(images.userId, userId)));
+      // Delete from database if exists
+      try {
+        const deletedRows = await this.drizzle.db
+          .delete(images)
+          .where(and(eq(images.public_id, publicId), eq(images.userId, userId)))
+          .returning();
 
-      return { success: true };
+        console.log(`Deleted ${deletedRows.length} database records`);
+      } catch (dbError) {
+        console.warn(
+          'Database entry not found, continuing with deletion',
+          dbError,
+        );
+        // Continue even if database deletion fails
+      }
+
+      return { success: true, message: 'Image deleted successfully' };
     } catch (error) {
       console.error('Delete error:', error);
       throw new BadRequestException(`Failed to delete image: ${error.message}`);
     }
   }
 
-  async remove(id: string, userId: string, source?: string) {
+  async remove(id: string, userId: string) {
     try {
-      console.log('Deleting image:', { id, userId, source }); // Debug log
-
-      if (source === 'cloudinary') {
-        // For Cloudinary source, ensure we have the correct folder structure
-        return this.deleteImage(id, userId);
-      }
-
-      // If not Cloudinary, proceed with normal deletion
+      // Try to find the image first
       const image = await this.findOne(id, userId);
 
       // Delete from Cloudinary if we have a publicId
       if (image.public_id) {
         try {
-          await this.cloudinaryService.deleteFile(image.public_id);
+          await this.cloudinaryService.deleteUserResource(
+            image.public_id,
+            userId,
+            'images',
+          );
         } catch (cloudinaryError) {
           console.error('Error deleting from Cloudinary:', cloudinaryError);
           // Continue with database deletion even if Cloudinary deletion fails

@@ -80,8 +80,19 @@ export class ImagesController {
     return this.imagesService.getUserImages(userId);
   }
 
-  @Delete(':publicId')
-  async deleteImage(@Param('publicId') publicId: string, @Req() req) {
-    return this.imagesService.deleteImage(publicId, req.user.id);
+  @Delete(':id')
+  async remove(@Param('id') id: string, @Req() req) {
+    const userId = req.user.id;
+    return this.imagesService.remove(id, userId);
+  }
+
+  @Delete('cloudinary/:publicId')
+  async removeFromCloudinary(
+    @Param('publicId') publicId: string,
+    @Query('folder') folder: string = 'images',
+    @Req() req,
+  ) {
+    const userId = req.user.id;
+    return this.imagesService.deleteImage(publicId, userId, folder);
   }
 }
