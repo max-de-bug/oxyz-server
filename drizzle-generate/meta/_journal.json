@@ -71,6 +71,13 @@
       "when": 1742726871447,
       "tag": "0009_glossy_ricochet",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1742989587532,
+      "tag": "0010_wealthy_scourge",
+      "breakpoints": true
     }
   ]
 }

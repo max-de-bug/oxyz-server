@@ -14,84 +14,74 @@ import {
   MaxFileSizeValidator,
   FileTypeValidator,
   ParseFilePipe,
+  BadRequestException,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ImagesService } from './images.service';
 import { CreateImageDto } from './dto/create-image.dto';
 import { UpdateImageDto } from './dto/update-image.dto';
-import { SupabaseAuthGuard } from 'src/auth/guards/auth.guard';
+import { SupabaseAuthGuard } from '../auth/guards/supabase-auth.guard';
+import { CloudinaryService } from '../cloudinary/cloudinary.service';
+import { diskStorage } from 'multer';
+import { extname } from 'path';
+import { v4 as uuidv4 } from 'uuid';
+import * as fs from 'fs';
 
 @Controller('images')
 @UseGuards(SupabaseAuthGuard)
 export class ImagesController {
   constructor(private readonly imagesService: ImagesService) {}
 
-  @Get()
-  async findAll(
-    @Req() req,
-    @Query('source') source?: string,
-    @Query('folder') folder?: string,
-  ) {
-    const userId = req.user.id;
-
-    if (source === 'cloudinary') {
-      return this.imagesService.findAllFromCloudinary(
-        folder || 'images',
-        userId,
-      );
-    }
-
-    return this.imagesService.findAll(userId);
-  }
-
-  @Get('cloudinary/:publicId')
-  async findOneFromCloudinary(@Param('publicId') publicId: string, @Req() req) {
-    const userId = req.user.id;
-    return this.imagesService.findOneFromCloudinary(publicId, userId);
-  }
-
-  @Delete(':id')
-  async remove(
-    @Param('id') id: string,
-    @Query('source') source: string,
-    @Req() req,
-  ) {
-    const userId = req.user?.id;
-    return this.imagesService.remove(id, userId, source);
-  }
-
   @Post('upload')
-  @UseInterceptors(FileInterceptor('file'))
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: diskStorage({
+        destination: './uploads',
+        filename: (req, file, cb) => {
+          const uniqueSuffix = uuidv4();
+          cb(null, `${uniqueSuffix}${extname(file.originalname)}`);
+        },
+      }),
+      fileFilter: (req, file, cb) => {
+        if (!file.mimetype.match(/^image\/(jpeg|png|gif|webp)$/)) {
+          return cb(
+            new BadRequestException('Only image files are allowed'),
+            false,
+          );
+        }
+        cb(null, true);
+      },
+      limits: {
+        fileSize: 5 * 1024 * 1024, // 5MB
+      },
+    }),
+  )
   async uploadImage(
     @UploadedFile(
       new ParseFilePipe({
         validators: [
+          new FileTypeValidator({ fileType: /(jpg|jpeg|png|gif)$/ }),
           new MaxFileSizeValidator({ maxSize: 5 * 1024 * 1024 }), // 5MB
-          new FileTypeValidator({ fileType: '.(png|jpeg|jpg)' }),
         ],
+        fileIsRequired: true,
       }),
     )
     file: Express.Multer.File,
-  ) {
-    return this.imagesService.uploadImage(file);
-  }
-
-  async create(
-    @UploadedFile() file: Express.Multer.File,
-    @Body() createImageDto: CreateImageDto,
     @Req() req,
   ) {
-    const userId = req.user.id;
-    return this.imagesService.create(file, createImageDto, userId);
+    if (!file) {
+      throw new BadRequestException('No file uploaded');
+    }
+    return this.imagesService.uploadImage(file, req.user.id);
   }
 
-  @Put(':id')
-  async update(
-    @Param('id') id: string,
-    @Body() updateImageDto: UpdateImageDto,
-    @Req() req,
-  ) {
-    const userId = req.user.id;
-    return this.imagesService.update(id, updateImageDto, userId);
+  @Get('user/:userId')
+  async getUserImages(@Param('userId') userId: string) {
+    return this.imagesService.getUserImages(userId);
+  }
+
+  @Delete(':publicId')
+  async deleteImage(@Param('publicId') publicId: string, @Req() req) {
+    return this.imagesService.deleteImage(publicId, req.user.id);
   }
 }

@@ -385,13 +385,12 @@ export class DesignsService {
 
       // Parse design state
       const designState = this.parseDesignState(design.designState);
-
       // Create a canvas with the image dimensions
-      const canvas = createCanvas(image.width || 800, image.height || 600);
-      const ctx = canvas.getContext('2d');
-
-      // Load and draw the base image
+      // The image object doesn't have width/height properties directly
+      // We'll need to load the image first to get its dimensions
       const img = await loadImage(image.url);
+      const canvas = createCanvas(img.width || 800, img.height || 600);
+      const ctx = canvas.getContext('2d');
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
       // Apply design transformations if available

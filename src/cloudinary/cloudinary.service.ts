@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { v2 as cloudinary } from 'cloudinary';
 import { Readable } from 'stream';
@@ -10,6 +10,7 @@ import {
 } from './interfaces/cloudinary.interfaces';
 import JSZip from 'jszip';
 import axios from 'axios';
+import * as fs from 'fs';
 
 @Injectable()
 export class CloudinaryService {
@@ -132,17 +133,17 @@ export class CloudinaryService {
     userId?: string,
     options: CloudinaryResourceOptions = {},
   ): Promise<CloudinaryResponse> {
-    const { includeDefaults = true, ...restOptions } = options;
+    const { includeDefaults = true, max_results = 100, next_cursor } = options;
     let allResources: CloudinaryResponse = { resources: [] };
 
     // If userId is provided, get user-specific resources
     if (userId) {
-      const userFolder = `${baseFolder}/user_${userId}`;
+      const userFolder = `users/${userId}/${baseFolder}`;
       try {
-        const userResources = await this.getResourcesByFolder(
-          userFolder,
-          restOptions,
-        );
+        const userResources = await this.getResourcesByFolder(userFolder, {
+          max_results,
+          next_cursor,
+        });
         allResources.resources = [
           ...allResources.resources,
           ...userResources.resources,
@@ -159,11 +160,20 @@ export class CloudinaryService {
       try {
         const defaultResources = await this.getResourcesByFolder(
           defaultsFolder,
-          restOptions,
+          { max_results: 100 }, // Always fetch all defaults
         );
+
+        // Tag default resources
+        const defaultResourcesWithTags = defaultResources.resources.map(
+          (resource) => ({
+            ...resource,
+            tags: [...(resource.tags || []), 'default'],
+          }),
+        );
+
         allResources.resources = [
           ...allResources.resources,
-          ...defaultResources.resources,
+          ...defaultResourcesWithTags,
         ];
 
         // Only use defaults next_cursor if we don't have one from user resources
@@ -190,21 +200,19 @@ export class CloudinaryService {
     folder: string,
     options: CloudinaryResourceOptions = {},
   ): Promise<CloudinaryResponse> {
-    return new Promise((resolve, reject) => {
-      cloudinary.api.resources(
-        {
-          type: 'upload',
-          prefix: folder,
-          max_results: options.max_results || 100,
-          next_cursor: options.next_cursor,
-          resource_type: options.resource_type || 'image',
-        },
-        (error, result) => {
-          if (error) return reject(error);
-          resolve(result as CloudinaryResponse);
-        },
-      );
-    });
+    try {
+      const result = await cloudinary.api.resources({
+        type: 'upload',
+        prefix: folder,
+        max_results: options.max_results || 100,
+        next_cursor: options.next_cursor,
+        resource_type: options.resource_type || 'image',
+      });
+      return result as CloudinaryResponse;
+    } catch (error) {
+      console.error(`Error fetching resources from folder ${folder}:`, error);
+      return { resources: [] };
+    }
   }
 
   /**
@@ -217,20 +225,17 @@ export class CloudinaryService {
     tag: string,
     options: CloudinaryResourceOptions = {},
   ): Promise<CloudinaryResponse> {
-    return new Promise((resolve, reject) => {
-      cloudinary.api.resources_by_tag(
-        tag,
-        {
-          max_results: options.max_results || 100,
-          next_cursor: options.next_cursor,
-          resource_type: options.resource_type || 'image',
-        },
-        (error, result) => {
-          if (error) return reject(error);
-          resolve(result as CloudinaryResponse);
-        },
-      );
-    });
+    try {
+      const result = await cloudinary.api.resources_by_tag(tag, {
+        max_results: options.max_results || 100,
+        next_cursor: options.next_cursor,
+        resource_type: options.resource_type || 'image',
+      });
+      return result as CloudinaryResponse;
+    } catch (error) {
+      console.error(`Error fetching resources by tag ${tag}:`, error);
+      return { resources: [] };
+    }
   }
 
   /**
@@ -243,18 +248,15 @@ export class CloudinaryService {
     publicIds: string[],
     options: { resource_type?: string } = {},
   ): Promise<CloudinaryResponse> {
-    return new Promise((resolve, reject) => {
-      cloudinary.api.resources_by_ids(
-        publicIds,
-        {
-          resource_type: options.resource_type || 'image',
-        },
-        (error, result) => {
-          if (error) return reject(error);
-          resolve(result as CloudinaryResponse);
-        },
-      );
-    });
+    try {
+      const result = await cloudinary.api.resources_by_ids(publicIds, {
+        resource_type: options.resource_type || 'image',
+      });
+      return result as CloudinaryResponse;
+    } catch (error) {
+      console.error(`Error fetching resources by IDs:`, error);
+      return { resources: [] };
+    }
   }
 
   /**
@@ -267,7 +269,7 @@ export class CloudinaryService {
     expression: string,
     options: CloudinarySearchOptions = {},
   ): Promise<CloudinaryResponse> {
-    return new Promise((resolve, reject) => {
+    try {
       let searchQuery = cloudinary.search
         .expression(expression)
         .max_results(options.max_results || 100);
@@ -285,14 +287,20 @@ export class CloudinaryService {
 
       // Apply with_field if provided
       if (options.with_field && options.with_field.length > 0) {
-        searchQuery = searchQuery.with_field(options.with_field);
+        options.with_field.forEach((field) => {
+          searchQuery = searchQuery.with_field(field);
+        });
       }
 
-      searchQuery
-        .execute()
-        .then((result) => resolve(result as CloudinaryResponse))
-        .catch((error) => reject(error));
-    });
+      const result = await searchQuery.execute();
+      return result as CloudinaryResponse;
+    } catch (error) {
+      console.error(
+        `Error searching resources with expression ${expression}:`,
+        error,
+      );
+      return { resources: [] };
+    }
   }
 
   /**
@@ -300,12 +308,12 @@ export class CloudinaryService {
    * @returns Promise with the folders
    */
   async listFolders(): Promise<any> {
-    return new Promise((resolve, reject) => {
-      cloudinary.api.root_folders((error, result) => {
-        if (error) return reject(error);
-        resolve(result);
-      });
-    });
+    try {
+      return await cloudinary.api.root_folders();
+    } catch (error) {
+      console.error('Error listing folders:', error);
+      return { folders: [] };
+    }
   }
 
   /**
@@ -314,12 +322,12 @@ export class CloudinaryService {
    * @returns Promise with the subfolders
    */
   async listSubFolders(folder: string): Promise<any> {
-    return new Promise((resolve, reject) => {
-      cloudinary.api.sub_folders(folder, (error, result) => {
-        if (error) return reject(error);
-        resolve(result);
-      });
-    });
+    try {
+      return await cloudinary.api.sub_folders(folder);
+    } catch (error) {
+      console.error(`Error listing subfolders in ${folder}:`, error);
+      return { folders: [] };
+    }
   }
 
   /**
@@ -328,12 +336,14 @@ export class CloudinaryService {
    * @returns Promise with the result
    */
   async createFolder(path: string): Promise<any> {
-    return new Promise((resolve, reject) => {
-      cloudinary.api.create_folder(path, (error, result) => {
-        if (error) return reject(error);
-        resolve(result);
-      });
-    });
+    try {
+      return await cloudinary.api.create_folder(path);
+    } catch (error) {
+      console.error(`Error creating folder ${path}:`, error);
+      throw new BadRequestException(
+        `Failed to create folder: ${error.message}`,
+      );
+    }
   }
 
   /**
@@ -346,16 +356,16 @@ export class CloudinaryService {
     publicId: string,
     metadata: Record<string, any>,
   ): Promise<any> {
-    return new Promise((resolve, reject) => {
-      cloudinary.uploader.add_context(
-        JSON.stringify(metadata),
-        [publicId],
-        (error, result) => {
-          if (error) return reject(error);
-          resolve(result);
-        },
+    try {
+      return await cloudinary.uploader.add_context(JSON.stringify(metadata), [
+        publicId,
+      ]);
+    } catch (error) {
+      console.error(`Error updating metadata for ${publicId}:`, error);
+      throw new BadRequestException(
+        `Failed to update metadata: ${error.message}`,
       );
-    });
+    }
   }
 
   /**
@@ -365,14 +375,14 @@ export class CloudinaryService {
    * @returns Promise with the result
    */
   async addTags(publicId: string, tags: string[]): Promise<any> {
-    return new Promise((resolve, reject) => {
+    try {
       // Cloudinary API expects a single tag string, so join multiple tags with comma
       const tagString = tags.join(',');
-      cloudinary.uploader.add_tag(tagString, [publicId], (error, result) => {
-        if (error) return reject(error);
-        resolve(result);
-      });
-    });
+      return await cloudinary.uploader.add_tag(tagString, [publicId]);
+    } catch (error) {
+      console.error(`Error adding tags to ${publicId}:`, error);
+      throw new BadRequestException(`Failed to add tags: ${error.message}`);
+    }
   }
 
   /**
@@ -418,5 +428,118 @@ export class CloudinaryService {
 
     // Generate the zip file
     return zip.generateAsync({ type: 'nodebuffer' });
+  }
+
+  /**
+   * Upload a file to a user-specific folder
+   * @param file The file to upload
+   * @param userId The user ID
+   * @param type The type of resource (images, logos, etc.)
+   * @returns The upload result
+   */
+  async uploadToUserFolder(
+    file: Express.Multer.File,
+    userId: string,
+    type: string = 'images',
+  ) {
+    try {
+      const folder = `users/${userId}/${type}`;
+
+      // Use upload_stream for better control and error handling
+      return new Promise<any>((resolve, reject) => {
+        const uploadStream = cloudinary.uploader.upload_stream(
+          {
+            folder,
+            resource_type: 'auto',
+          },
+          (error, result) => {
+            if (error) return reject(error);
+            resolve({
+              publicId: result?.public_id,
+              url: result?.secure_url,
+              width: result?.width || 0,
+              height: result?.height || 0,
+              format: result?.format,
+            });
+          },
+        );
+
+        // If we have a buffer, use it directly
+        if (file.buffer) {
+          const readableStream = new Readable();
+          readableStream.push(file.buffer);
+          readableStream.push(null);
+          readableStream.pipe(uploadStream);
+        }
+        // If we have a path, read from the file
+        else if (file.path) {
+          fs.createReadStream(file.path).pipe(uploadStream);
+        } else {
+          reject(new BadRequestException('No file data available'));
+        }
+      });
+    } catch (error) {
+      console.error('Cloudinary upload error:', error);
+      throw new BadRequestException('Failed to upload file to Cloudinary');
+    } finally {
+      // Clean up temporary file if it exists
+      if (file.path && fs.existsSync(file.path)) {
+        fs.unlinkSync(file.path);
+      }
+    }
+  }
+
+  /**
+   * Get resources for a specific user and type
+   * @param userId The user ID
+   * @param type The type of resource (images, logos, etc.)
+   * @returns Promise with the user's resources
+   */
+  async getUserResources(
+    userId: string,
+    type: string = 'images',
+  ): Promise<CloudinaryResponse> {
+    try {
+      const folder = `users/${userId}/${type}`;
+      const result = await cloudinary.search
+        .expression(`folder:${folder}`)
+        .sort_by('created_at', 'desc')
+        .max_results(100)
+        .execute();
+
+      return {
+        resources: result.resources || [],
+        total: result.total_count || 0,
+        next_cursor: result.next_cursor || null,
+      };
+    } catch (error) {
+      console.warn(`No resources found for user ${userId} in ${type} folder`);
+      return {
+        resources: [],
+        total: 0,
+        next_cursor: null,
+      };
+    }
+  }
+
+  /**
+   * Delete a user's resource
+   * @param publicId The public ID of the resource to delete
+   * @param userId The user ID
+   * @returns Promise with the deletion result
+   */
+  async deleteUserResource(publicId: string, userId: string): Promise<boolean> {
+    try {
+      // Verify the resource belongs to the user
+      if (!publicId.includes(`users/${userId}/`)) {
+        throw new BadRequestException('Unauthorized to delete this resource');
+      }
+
+      const result = await cloudinary.uploader.destroy(publicId);
+      return result.result === 'ok';
+    } catch (error) {
+      console.error('Error deleting resource:', error);
+      throw new BadRequestException('Failed to delete resource');
+    }
   }
 }

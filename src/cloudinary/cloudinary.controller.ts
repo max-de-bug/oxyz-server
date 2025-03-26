@@ -24,10 +24,18 @@ export class CloudinaryController {
     @Query('max_results') maxResults?: string,
     @Query('next_cursor') nextCursor?: string,
   ): Promise<CloudinaryResponse> {
-    return this.cloudinaryService.getResourcesByFolder(folder, {
+    // Create search options object
+    const searchOptions = {
+      expression: `folder:${folder}`,
       max_results: maxResults ? parseInt(maxResults) : 100,
       next_cursor: nextCursor,
-    });
+    };
+
+    // Use searchResources instead of getResourcesByFolder
+    return this.cloudinaryService.searchResources(
+      `folder:${folder}`,
+      searchOptions,
+    );
   }
 
   @Get('search')

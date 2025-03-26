@@ -8,48 +8,131 @@ import { DrizzleService } from '../drizzle/drizzle.service';
 import { CloudinaryService } from '../cloudinary/cloudinary.service';
 import { CreateImageDto } from './dto/create-image.dto';
 import { UpdateImageDto } from './dto/update-image.dto';
-import { images } from '../drizzle/schema';
 import { eq, and, inArray } from 'drizzle-orm';
 import { v4 as uuidv4 } from 'uuid';
 import cloudinary from 'cloudinary';
 import { CloudinaryResponse } from '../cloudinary/cloudinary-response';
+import * as fs from 'fs';
+import { images } from '../drizzle/schema';
+
 @Injectable()
 export class ImagesService {
   constructor(
-    private drizzle: DrizzleService,
-    private cloudinary: CloudinaryService,
+    private readonly cloudinaryService: CloudinaryService,
+    private readonly drizzle: DrizzleService,
   ) {}
 
-  async uploadImage(file: Express.Multer.File) {
+  async uploadImage(file: Express.Multer.File, userId: string) {
     try {
-      if (!file) {
-        throw new BadRequestException('No file provided');
+      if (!file || !file.mimetype || !file.size) {
+        throw new BadRequestException('Invalid file upload');
       }
 
-      // Convert buffer to base64
-      const b64 = Buffer.from(file.buffer).toString('base64');
-      // Upload to Cloudinary
-      const result = await this.cloudinary.uploadFile(file, 'images');
+      const result = await this.cloudinaryService.uploadToUserFolder(
+        file,
+        userId,
+        'images',
+      );
 
-      return {
-        id: result.public_id,
-        url: result.secure_url,
-        filename: file.originalname,
-      };
+      // Save to database with the exact column names from schema.ts
+      const savedImage = await this.drizzle.db
+        .insert(images)
+        .values({
+          id: uuidv4(),
+          userId: userId,
+          url: result.url,
+          filename: file.originalname,
+          public_id: result.publicId,
+          mime_type: file.mimetype,
+          size: file.size,
+          width: result.width || 0,
+          height: result.height || 0,
+          created_at: new Date(),
+          updated_at: new Date(),
+        })
+        .returning();
+
+      return savedImage;
     } catch (error) {
-      console.error('Error uploading to Cloudinary:', error);
-      throw new BadRequestException('Failed to upload image');
+      console.error('Upload error:', error);
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+      throw new BadRequestException(`Failed to upload image: ${error.message}`);
+    } finally {
+      // Clean up temporary file
+      if (file?.path && fs.existsSync(file.path)) {
+        fs.unlinkSync(file.path);
+      }
     }
   }
 
-  async findAll(userId: string, tags?: string[]) {
-    const results = await this.drizzle.db
-      .select()
-      .from(images)
-      .where(eq(images.userId, userId))
-      .orderBy(images.createdAt);
+  async getUserImages(userId: string) {
+    try {
+      // Get images from both Cloudinary and database
+      const [cloudinaryResult, dbImages] = await Promise.all([
+        this.findAllFromCloudinary('images', userId),
+        this.findAll(userId),
+      ]);
 
-    return results;
+      // Combine and deduplicate images based on publicId
+      const combinedImages = new Map();
+
+      // Add Cloudinary images
+      cloudinaryResult.images.forEach((image) => {
+        combinedImages.set(image.publicId, image);
+      });
+
+      // Add/Update with database images
+      dbImages.forEach((image) => {
+        if (image.public_id) {
+          combinedImages.set(image.public_id, {
+            id: image.id,
+            url: image.url,
+            filename: image.filename,
+            publicId: image.public_id,
+            mimeType: image.mime_type,
+            size: image.size,
+            width: image.width,
+            height: image.height,
+            createdAt: image.created_at,
+            updatedAt: image.updated_at,
+          });
+        }
+      });
+
+      return {
+        images: Array.from(combinedImages.values()),
+        total: combinedImages.size,
+      };
+    } catch (error) {
+      console.error('Error fetching user images:', error);
+      return {
+        images: [],
+        total: 0,
+      };
+    }
+  }
+
+  async findAll(userId: string) {
+    try {
+      const dbImages = await this.drizzle.db
+        .select()
+        .from(images)
+        .where(eq(images.userId, userId));
+
+      // Map the response to maintain API consistency
+      return dbImages.map((image) => ({
+        ...image,
+        publicId: image.public_id,
+        mimeType: image.mime_type,
+        createdAt: image.created_at,
+        updatedAt: image.updated_at,
+      }));
+    } catch (error) {
+      console.error('Error fetching images:', error);
+      return [];
+    }
   }
 
   async findOne(id: string, userId: string) {
@@ -71,12 +154,15 @@ export class ImagesService {
     userId: string,
   ) {
     // Upload to Cloudinary
-    const uploadResult = await this.cloudinary.uploadFile(file, 'images');
+    const uploadResult = await this.cloudinaryService.uploadFile(
+      file,
+      'images',
+    );
 
     const id = uuidv4();
     const newImage = {
       id,
-      userId,
+      user_id: userId,
       filename: file.originalname,
       url: uploadResult.secure_url,
       publicId: uploadResult.public_id,
@@ -90,7 +176,24 @@ export class ImagesService {
       updatedAt: new Date(),
     };
 
-    await this.drizzle.db.insert(images).values(newImage);
+    // Convert camelCase to snake_case for database insertion
+    const dbImage = {
+      id: newImage.id,
+      user_id: newImage.user_id,
+      filename: newImage.filename,
+      url: newImage.url,
+      public_id: newImage.publicId,
+      width: newImage.width,
+      height: newImage.height,
+      format: newImage.format,
+      tags: newImage.tags,
+      mime_type: newImage.mimeType,
+      size: newImage.size,
+      created_at: newImage.createdAt,
+      updated_at: newImage.updatedAt,
+    };
+
+    await this.drizzle.db.insert(images).values(dbImage);
     return this.findOne(id, userId);
   }
 
@@ -99,7 +202,7 @@ export class ImagesService {
 
     const updatedImage = {
       ...image,
-      tags: updateImageDto.tags || image.tags,
+      tags: updateImageDto.tags,
       updatedAt: new Date(),
     };
 
@@ -111,30 +214,20 @@ export class ImagesService {
     return this.findOne(id, userId);
   }
 
-  async deleteFromCloudinary(publicId: string) {
+  async deleteImage(publicId: string, userId: string) {
     try {
-      // Ensure we're using the full path including the folder
-      const fullPublicId = publicId.startsWith('images/')
-        ? publicId
-        : `images/${publicId}`;
-      console.log('Attempting to delete from Cloudinary:', fullPublicId); // Debug log
+      // Delete from Cloudinary
+      await this.cloudinaryService.deleteUserResource(publicId, userId);
 
-      const result = await this.cloudinary.deleteFile(fullPublicId);
+      // Delete from database
+      await this.drizzle.db
+        .delete(images)
+        .where(and(eq(images.public_id, publicId), eq(images.userId, userId)));
 
-      if (!result) {
-        console.error('Cloudinary deletion failed:', result);
-        throw new BadRequestException('Failed to delete image from Cloudinary');
-      }
-
-      return { success: true, message: 'Image deleted successfully' };
+      return { success: true };
     } catch (error) {
-      console.error('Error deleting from Cloudinary:', error);
-      if (error.http_code === 404) {
-        throw new NotFoundException('Image not found in Cloudinary');
-      }
-      throw new BadRequestException(
-        `Failed to delete image from Cloudinary: ${error.message || 'Unknown error'}`,
-      );
+      console.error('Delete error:', error);
+      throw new BadRequestException(`Failed to delete image: ${error.message}`);
     }
   }
 
@@ -144,16 +237,16 @@ export class ImagesService {
 
       if (source === 'cloudinary') {
         // For Cloudinary source, ensure we have the correct folder structure
-        return this.deleteFromCloudinary(id);
+        return this.deleteImage(id, userId);
       }
 
       // If not Cloudinary, proceed with normal deletion
       const image = await this.findOne(id, userId);
 
       // Delete from Cloudinary if we have a publicId
-      if (image.publicId) {
+      if (image.public_id) {
         try {
-          await this.cloudinary.deleteFile(image.publicId);
+          await this.cloudinaryService.deleteFile(image.public_id);
         } catch (cloudinaryError) {
           console.error('Error deleting from Cloudinary:', cloudinaryError);
           // Continue with database deletion even if Cloudinary deletion fails
@@ -185,13 +278,22 @@ export class ImagesService {
    */
   async findAllFromCloudinary(folder: string = 'images', userId: string) {
     try {
-      // Fetch images from Cloudinary
+      // Fetch images from user's specific folder
+      const userFolder = `users/${userId}/${folder}`;
       const cloudinaryResult =
-        await this.cloudinary.getResourcesByFolder(folder);
+        await this.cloudinaryService.getResourcesByFolder(userFolder);
+
+      // If no resources or empty result, return empty array
+      if (!cloudinaryResult || !cloudinaryResult.resources) {
+        return {
+          images: [],
+          total: 0,
+        };
+      }
 
       // Map Cloudinary resources to our application format
       const cloudinaryImages = cloudinaryResult.resources.map((resource) => ({
-        id: resource.public_id, // Using public_id as id for Cloudinary resources
+        id: resource.public_id,
         url: resource.secure_url,
         filename: resource.public_id.split('/').pop(),
         mimeType: resource.resource_type + '/' + resource.format,
@@ -201,33 +303,24 @@ export class ImagesService {
         publicId: resource.public_id,
         createdAt: resource.created_at,
         updatedAt: resource.created_at,
-        // Add any additional fields needed
       }));
 
-      // Optionally, you can merge with database records to get additional metadata
-      const dbImages = await this.findAll(userId);
-      const dbImageMap = new Map(dbImages.map((img) => [img.publicId, img]));
-
-      return cloudinaryImages.map((cloudImg) => {
-        const dbImg = dbImageMap.get(cloudImg.publicId);
-        return dbImg ? { ...cloudImg, ...dbImg } : cloudImg;
-      });
+      return {
+        images: cloudinaryImages,
+        total: cloudinaryImages.length,
+      };
     } catch (error) {
       console.error('Error fetching images from Cloudinary:', error);
-      // Fallback to database if Cloudinary fetch fails
-      return this.findAll(userId);
+      return {
+        images: [],
+        total: 0,
+      };
     }
   }
 
-  /**
-   * Fetch a single image from Cloudinary by public ID
-   * @param publicId The public ID of the image
-   * @param userId The user ID
-   * @returns The image from Cloudinary
-   */
   async findOneFromCloudinary(publicId: string, userId: string) {
     try {
-      const cloudinaryResult = await this.cloudinary.getResourcesByIds([
+      const cloudinaryResult = await this.cloudinaryService.getResourcesByIds([
         publicId,
       ]);
 
@@ -240,7 +333,13 @@ export class ImagesService {
 
       const resource = cloudinaryResult.resources[0];
 
-      // Map Cloudinary resource to our application format
+      // Try to find matching database record
+      const [dbImage] = await this.drizzle.db
+        .select()
+        .from(images)
+        .where(and(eq(images.public_id, publicId), eq(images.userId, userId)))
+        .limit(1);
+
       const cloudinaryImage = {
         id: resource.public_id,
         url: resource.secure_url,
@@ -254,35 +353,9 @@ export class ImagesService {
         updatedAt: resource.created_at,
       };
 
-      // Try to find matching database record for additional metadata
-      try {
-        const dbImages = await this.drizzle.db
-          .select()
-          .from(images)
-          .where(and(eq(images.publicId, publicId), eq(images.userId, userId)))
-          .limit(1);
-
-        if (dbImages.length > 0) {
-          return { ...cloudinaryImage, ...dbImages[0] };
-        }
-      } catch (dbError) {
-        console.error('Error fetching image from database:', dbError);
-      }
-
-      return cloudinaryImage;
+      return dbImage ? { ...cloudinaryImage, ...dbImage } : cloudinaryImage;
     } catch (error) {
-      console.error('Error fetching image from Cloudinary:', error);
-      // Try to fallback to database
-      const dbImages = await this.drizzle.db
-        .select()
-        .from(images)
-        .where(and(eq(images.publicId, publicId), eq(images.userId, userId)))
-        .limit(1);
-
-      if (dbImages.length > 0) {
-        return dbImages[0];
-      }
-
+      console.error('Error fetching image:', error);
       throw new NotFoundException('Image not found');
     }
   }

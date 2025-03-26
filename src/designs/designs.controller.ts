@@ -262,10 +262,15 @@ export class DesignsController {
         folderPath = `users/${userId}/${folderPath}`;
       }
 
-      const result = await this.cloudinaryService.getResourcesByFolder(
-        folderPath,
-        { max_results: maxResults },
-      );
+      // Remove the second argument since getResourcesByFolder only accepts the folder path
+      const result =
+        await this.cloudinaryService.getResourcesByFolder(folderPath);
+
+      // If you need to limit results, do it after getting the response
+      if (result.resources && maxResults) {
+        result.resources = result.resources.slice(0, maxResults);
+        result.total = Math.min(result.total || 0, maxResults);
+      }
 
       return result;
     } catch (error) {

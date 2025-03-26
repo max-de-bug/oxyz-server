@@ -18,11 +18,9 @@ export interface CloudinaryResource {
  * Interface for Cloudinary API response
  */
 export interface CloudinaryResponse {
-  resources: CloudinaryResource[];
-  next_cursor?: string;
-  rate_limit_allowed?: number;
-  rate_limit_remaining?: number;
-  rate_limit_reset_at?: string;
+  resources: any[];
+  next_cursor?: string | null;
+  total?: number;
 }
 
 /**

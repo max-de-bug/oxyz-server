@@ -161,16 +161,13 @@ export const images = pgTable('images', {
   userId: text('userId').references(() => users.id, { onDelete: 'cascade' }),
   url: text('url').notNull(),
   filename: text('filename').notNull(),
-  publicId: text('public_id'), // Cloudinary public ID
-
-  mimeType: text('mimeType').notNull(),
+  public_id: text('public_id'), // Changed from publicId to public_id to match Cloudinary's naming
+  mime_type: text('mime_type').notNull(),
   size: integer('size').notNull(),
   width: integer('width'),
   height: integer('height'),
-  description: text('description'),
-  tags: text('tags').array(),
-  createdAt: timestamp('createdAt').defaultNow().notNull(),
-  updatedAt: timestamp('updatedAt').defaultNow().notNull(),
+  created_at: timestamp('created_at').defaultNow().notNull(),
+  updated_at: timestamp('updated_at').defaultNow().notNull(),
 });
 
 //-------------------- DESIGNS
