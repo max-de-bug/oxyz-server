@@ -431,7 +431,7 @@ export class CloudinaryService {
   }
 
   /**
-   * Upload a file to a user-specific folder
+   * Upload a file to a user-specific folder in Cloudinary
    * @param file The file to upload
    * @param userId The user ID
    * @param type The type of resource (images, logos, etc.)
@@ -445,7 +445,7 @@ export class CloudinaryService {
     try {
       const folder = `users/${userId}/${type}`;
 
-      // Use upload_stream for better control and error handling
+      // Use the buffer approach which is more reliable
       return new Promise<any>((resolve, reject) => {
         const uploadStream = cloudinary.uploader.upload_stream(
           {
@@ -454,6 +454,7 @@ export class CloudinaryService {
           },
           (error, result) => {
             if (error) return reject(error);
+
             resolve({
               publicId: result?.public_id,
               url: result?.secure_url,
@@ -464,28 +465,15 @@ export class CloudinaryService {
           },
         );
 
-        // If we have a buffer, use it directly
-        if (file.buffer) {
-          const readableStream = new Readable();
-          readableStream.push(file.buffer);
-          readableStream.push(null);
-          readableStream.pipe(uploadStream);
-        }
-        // If we have a path, read from the file
-        else if (file.path) {
-          fs.createReadStream(file.path).pipe(uploadStream);
-        } else {
-          reject(new BadRequestException('No file data available'));
-        }
+        // Convert buffer to stream
+        const readableStream = new Readable();
+        readableStream.push(file.buffer);
+        readableStream.push(null);
+        readableStream.pipe(uploadStream);
       });
     } catch (error) {
       console.error('Cloudinary upload error:', error);
       throw new BadRequestException('Failed to upload file to Cloudinary');
-    } finally {
-      // Clean up temporary file if it exists
-      if (file.path && fs.existsSync(file.path)) {
-        fs.unlinkSync(file.path);
-      }
     }
   }
 
