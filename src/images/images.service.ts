@@ -10,8 +10,7 @@ import { CreateImageDto } from './dto/create-image.dto';
 import { UpdateImageDto } from './dto/update-image.dto';
 import { eq, and, inArray } from 'drizzle-orm';
 import { v4 as uuidv4 } from 'uuid';
-import cloudinary from 'cloudinary';
-import { CloudinaryResponse } from '../cloudinary/cloudinary-response';
+
 import * as fs from 'fs';
 import { images } from '../drizzle/schema';
 
@@ -373,6 +372,31 @@ export class ImagesService {
     } catch (error) {
       console.error('Error fetching image:', error);
       throw new NotFoundException('Image not found');
+    }
+  }
+
+  async getDefaultUserImage() {
+    try {
+      // Search for images in the defaults folder
+      const result =
+        await this.cloudinaryService.getResourcesByFolder('images/defaults');
+
+      if (!result.resources || result.resources.length === 0) {
+        throw new NotFoundException('No default user image found');
+      }
+
+      // Get the first image from the defaults folder
+      const defaultImage = result.resources[0];
+
+      return {
+        url: defaultImage.secure_url,
+        publicId: defaultImage.public_id,
+        width: defaultImage.width,
+        height: defaultImage.height,
+      };
+    } catch (error) {
+      console.error('Error fetching default user image:', error);
+      throw new NotFoundException('Default user image not found');
     }
   }
 }

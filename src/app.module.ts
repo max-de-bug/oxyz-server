@@ -10,7 +10,7 @@ import { CloudinaryModule } from './cloudinary/cloudinary.module';
 import { AuthModule } from './auth/auth.module';
 import { PresetsModule } from './presets/presets.module';
 import { TypographyModule } from './typography/typography.module';
-
+import { UsersModule } from './users/users.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -24,6 +24,7 @@ import { TypographyModule } from './typography/typography.module';
     DesignsModule,
     PresetsModule,
     TypographyModule,
+    UsersModule,
   ],
   controllers: [AppController],
   providers: [AppService],

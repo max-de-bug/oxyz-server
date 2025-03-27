@@ -1,11 +1,16 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { DrizzleService } from '../drizzle/drizzle.service';
 import { eq, and } from 'drizzle-orm';
 import { users, accounts } from '../drizzle/schema';
-
+import { CloudinaryService } from '../cloudinary/cloudinary.service';
 @Injectable()
 export class UsersService {
-  constructor(private drizzle: DrizzleService) {}
+  private readonly logger = new Logger(UsersService.name);
+
+  constructor(
+    private drizzle: DrizzleService,
+    private cloudinaryService: CloudinaryService,
+  ) {}
 
   /**
    * Find a user by their Discord provider account
@@ -148,6 +153,76 @@ export class UsersService {
         expires_at,
         token_type,
       });
+    }
+  }
+
+  async getDefaultUserImage() {
+    this.logger.log('Attempting to fetch default user image');
+
+    try {
+      // First try to get from users/defaults folder
+      this.logger.debug('Attempting to fetch from users/defaults folder');
+      try {
+        const result =
+          await this.cloudinaryService.getResourcesByBaseFolder('users');
+        this.logger.debug(
+          `Result from users/defaults: ${JSON.stringify(result)}`,
+        );
+
+        if (result.resources && result.resources.length > 0) {
+          const defaultImage = result.resources[0];
+          this.logger.log(
+            `Found default image in users/defaults: ${defaultImage.public_id}`,
+          );
+          return {
+            url: defaultImage.secure_url,
+            publicId: defaultImage.public_id,
+            width: defaultImage.width,
+            height: defaultImage.height,
+          };
+        } else {
+          this.logger.warn('No resources found in users/defaults folder');
+        }
+      } catch (firstError) {
+        this.logger.warn(
+          `Error fetching from users/defaults: ${firstError.message}`,
+          firstError.stack,
+        );
+      }
+
+      // If no images found in users/defaults, try images/defaults folder
+      this.logger.debug('Attempting to fetch from images/defaults folder');
+      const result =
+        await this.cloudinaryService.getResourcesByFolder('images/defaults');
+      this.logger.debug(
+        `Result from images/defaults: ${JSON.stringify(result)}`,
+      );
+
+      if (!result.resources || result.resources.length === 0) {
+        this.logger.error('No default user image found in any defaults folder');
+        throw new NotFoundException(
+          'No default user image found in any defaults folder',
+        );
+      }
+
+      // Get the first image from the defaults folder
+      const defaultImage = result.resources[0];
+      this.logger.log(
+        `Found default image in images/defaults: ${defaultImage.public_id}`,
+      );
+
+      return {
+        url: defaultImage.secure_url,
+        publicId: defaultImage.public_id,
+        width: defaultImage.width,
+        height: defaultImage.height,
+      };
+    } catch (error) {
+      this.logger.error(
+        `Error fetching default user image: ${error.message}`,
+        error.stack,
+      );
+      throw new NotFoundException('Default user image not found');
     }
   }
 }
