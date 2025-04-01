@@ -1,41 +1,41 @@
 import {
   IsString,
-  IsUUID,
   IsOptional,
   IsObject,
+  IsArray,
   ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import { Placeholder, SQL } from 'drizzle-orm';
 
-class PresetFilterDto {
-  @IsString()
-  name: string;
+class FilterDto {
+  @IsOptional()
+  brightness?: number;
 
-  @IsObject()
-  filter: {
-    brightness?: number;
-    contrast?: number;
-    saturation?: number;
-    sepia?: number;
-  };
+  @IsOptional()
+  contrast?: number;
+
+  @IsOptional()
+  saturation?: number;
+
+  @IsOptional()
+  sepia?: number;
+
+  @IsOptional()
+  opacity?: number;
 }
 
 class TextOverlayDto {
   @IsString()
-  @IsOptional()
-  text?: string;
+  text: string;
+
+  @IsString()
+  color: string;
+
+  @IsString()
+  fontFamily: string;
 
   @IsOptional()
   fontSize?: number;
-
-  @IsString()
-  @IsOptional()
-  color?: string;
-
-  @IsString()
-  @IsOptional()
-  fontFamily?: string;
 
   @IsOptional()
   isBold?: boolean;
@@ -47,52 +47,42 @@ class TextOverlayDto {
   isVisible?: boolean;
 }
 
-class PositionDto {
-  @IsOptional()
-  x?: number;
+class LogoPositionDto {
+  @IsString()
+  url: string;
+
+  @IsObject()
+  position: { x: number; y: number };
 
   @IsOptional()
-  y?: number;
-
-  @IsOptional()
-  rotation?: number;
-
-  @IsOptional()
-  scale?: number;
+  size?: number;
 }
 
 export class CreateDesignDto {
-  designState(designState: any) {
-    throw new Error('Method not implemented.');
-  }
+  @IsString()
   name: string;
-  imageId: string;
-  logoId?: string;
-  preset: {
-    name: string;
-    filter: {
-      brightness?: number;
-      contrast?: number;
-      saturation?: number;
-      sepia?: number;
-    };
-  };
-  textOverlay: {
-    text: string;
-    fontSize: number;
-    color: string;
-    fontFamily: string;
-    isBold: boolean;
-    isItalic: boolean;
-    isVisible: boolean;
-  };
-  position: {
-    translationX: number;
-    translationY: number;
-    rotation: number;
-    minSize: number;
-    maxSize: number;
-    spacing: number;
-  };
-  collectionId: number;
+
+  @IsString()
+  imageUrl: string;
+
+  @IsOptional()
+  @IsObject()
+  @ValidateNested()
+  @Type(() => FilterDto)
+  filter?: FilterDto;
+
+  @IsOptional()
+  @IsObject()
+  @ValidateNested()
+  @Type(() => TextOverlayDto)
+  textOverlay?: TextOverlayDto;
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => LogoPositionDto)
+  logos?: LogoPositionDto[];
+
+  @IsString()
+  aspectRatio: string;
 }

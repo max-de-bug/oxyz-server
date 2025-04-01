@@ -549,4 +549,35 @@ export class CloudinaryService {
       );
     }
   }
+  async createFileFromUrl(url: string): Promise<Express.Multer.File> {
+    // If it's a base64 string
+    if (url.startsWith('data:')) {
+      const base64Data = url.split(',')[1];
+      const buffer = Buffer.from(base64Data, 'base64');
+      const tempFilename = `temp-${Date.now()}.png`;
+
+      return {
+        fieldname: 'file',
+        originalname: tempFilename,
+        encoding: '7bit',
+        mimetype: 'image/png',
+        buffer,
+        size: buffer.length,
+      } as Express.Multer.File;
+    }
+
+    // If it's a URL
+    const response = await fetch(url);
+    const buffer = await response.arrayBuffer();
+    const tempFilename = `temp-${Date.now()}.png`;
+
+    return {
+      fieldname: 'file',
+      originalname: tempFilename,
+      encoding: '7bit',
+      mimetype: 'image/png',
+      buffer: Buffer.from(buffer),
+      size: buffer.byteLength,
+    } as Express.Multer.File;
+  }
 }
