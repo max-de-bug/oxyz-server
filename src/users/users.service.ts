@@ -22,6 +22,50 @@ export class UsersService {
   ) {}
 
   /**
+   * Get a user's profile by ID
+   */
+  async getProfile(userId: string) {
+    if (!userId) {
+      throw new BadRequestException('User ID is required');
+    }
+
+    try {
+      // Fetch the user from the database
+      const [user] = await this.drizzle.db
+        .select()
+        .from(users)
+        .where(eq(users.id, userId));
+
+      if (!user) {
+        throw new NotFoundException(`User with ID ${userId} not found`);
+      }
+
+      // Format and return user profile data
+      return {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        image: user.image,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt,
+      };
+    } catch (error) {
+      this.logger.error(
+        `Error getting profile for user ${userId}: ${error.message}`,
+        error.stack,
+      );
+
+      // Rethrow specific exceptions
+      if (error instanceof HttpException) {
+        throw error;
+      }
+
+      // Otherwise throw a general exception
+      throw new InternalServerErrorException('Failed to get user profile');
+    }
+  }
+
+  /**
    * Find a user by their Discord provider account
    */
   async findByDiscordId(discordId: string) {

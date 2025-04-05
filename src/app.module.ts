@@ -11,6 +11,7 @@ import { AuthModule } from './auth/auth.module';
 import { PresetsModule } from './presets/presets.module';
 import { TypographyModule } from './typography/typography.module';
 import { UsersModule } from './users/users.module';
+import { FiltersModule } from './filters/filters.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -25,6 +26,7 @@ import { UsersModule } from './users/users.module';
     PresetsModule,
     TypographyModule,
     UsersModule,
+    FiltersModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -121,6 +121,25 @@ export const presets = pgTable('presets', {
   updatedAt: timestamp('updatedAt').defaultNow().notNull(),
 });
 
+//-------------------- FILTERS
+export const filters = pgTable('filters', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  userId: text('userId').references(() => users.id, { onDelete: 'cascade' }),
+  name: text('name').notNull(),
+  filter: json('filter').$type<{
+    brightness?: number;
+    contrast?: number;
+    saturation?: number;
+    sepia?: number;
+    opacity?: number;
+  }>(),
+  url: text('url'),
+  publicId: text('publicId'),
+  isDefault: boolean('isDefault').default(false),
+  createdAt: timestamp('createdAt').defaultNow().notNull(),
+  updatedAt: timestamp('updatedAt').defaultNow().notNull(),
+});
+
 // Add this after the presets table definition
 export const typography = pgTable('typography', {
   id: uuid('id').defaultRandom().primaryKey(),

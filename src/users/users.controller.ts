@@ -1,4 +1,12 @@
-import { Controller, Get, UseGuards, Req, Logger } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  UseGuards,
+  Req,
+  Logger,
+  Body,
+  Patch,
+} from '@nestjs/common';
 import { UsersService } from './users.service';
 import { SupabaseAuthGuard, Public } from '../auth/guards/auth.guard';
 import { Request } from 'express';
@@ -11,14 +19,37 @@ export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Get('profile')
-  getProfile(@Req() req: Request) {
-    if (req.user) {
-      const userId = req.user['id'] || 'unknown';
+  async getProfile(@Req() req: Request) {
+    if (req.user && req.user['id']) {
+      const userId = req.user['id'];
       this.logger.log(`Getting profile for user: ${userId}`);
-      return req.user;
+
+      try {
+        const userProfile = await this.usersService.getProfile(userId);
+        return userProfile;
+      } catch (error) {
+        this.logger.error(
+          `Error retrieving profile for user ${userId}: ${error.message}`,
+          error.stack,
+        );
+        throw error;
+      }
     }
+
     this.logger.warn('Profile requested but no user found in request');
     return null;
+  }
+
+  @Patch('username')
+  async updateUsername(
+    @Req() req: Request,
+    @Body() body: { username: string },
+  ) {
+    const userId = req.user ? req.user['id'] || 'unknown' : 'unknown';
+    this.logger.log(
+      `Updating username for user: ${userId} to ${body.username}`,
+    );
+    return this.usersService.updateUsername(userId, body.username);
   }
 
   @Public()
