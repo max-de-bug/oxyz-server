@@ -19,12 +19,6 @@ import { Public, SupabaseAuthGuard } from 'src/auth/guards/auth.guard';
 export class PresetsController {
   constructor(private readonly presetsService: PresetsService) {}
 
-  @Public()
-  @Get('public-presets')
-  getPublicPresets() {
-    // ...
-  }
-
   @Get()
   @ApiOperation({ summary: 'Get all presets for the current user' })
   @ApiResponse({
@@ -97,26 +91,6 @@ export class PresetsController {
     description:
       'Returns paginated presets from Cloudinary for the current user',
   })
-  findAllFromCloudinaryWithPagination(
-    @Req() req,
-    @Query('maxResults') maxResults?: number,
-    @Query('nextCursor') nextCursor?: string,
-    @Query('includeDefaults') includeDefaults?: string,
-  ) {
-    const includeDefaultsBool = includeDefaults
-      ? includeDefaults === 'true'
-      : true;
-    return this.presetsService.findAllFromCloudinaryWithPagination(
-      'presets',
-      req.user.id,
-      {
-        maxResults: maxResults ? Number(maxResults) : undefined,
-        nextCursor: nextCursor || undefined,
-        includeDefaults: includeDefaultsBool,
-      },
-    );
-  }
-
   @Get(':id')
   @ApiOperation({ summary: 'Get a preset by ID' })
   @ApiResponse({

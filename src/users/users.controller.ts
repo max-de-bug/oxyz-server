@@ -53,13 +53,6 @@ export class UsersController {
   }
 
   @Public()
-  @Get('public')
-  getPublicData() {
-    this.logger.log('Accessing public user data endpoint');
-    return { message: 'This is public data' };
-  }
-
-  @Public()
   @Get('defaults/image')
   async getDefaultUserImage() {
     this.logger.log('Attempting to get default user image');

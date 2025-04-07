@@ -54,15 +54,6 @@ export class LogosController {
     return this.logosService.findOne(id, userId);
   }
 
-  async create(
-    @UploadedFile() file: Express.Multer.File,
-    @Body() createLogoDto: CreateLogoDto,
-    @Req() req,
-  ) {
-    const userId = req.user.id;
-    return this.logosService.create(file, createLogoDto, userId);
-  }
-
   @Put(':id')
   async update(
     @Param('id') id: string,
@@ -77,11 +68,5 @@ export class LogosController {
   async remove(@Param('id') id: string, @Req() req) {
     const userId = req.user.id;
     return this.logosService.remove(id, userId);
-  }
-
-  @Post(':id/set-default')
-  async setDefault(@Param('id') id: string, @Req() req) {
-    const userId = req.user.id;
-    return this.logosService.setDefault(id, userId);
   }
 }
