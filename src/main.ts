@@ -23,7 +23,11 @@ async function bootstrap() {
 
   // Enable CORS
   app.enableCors({
-    origin: process.env.FRONTEND_URL, // Add your frontend URL here
+    origin: process.env.FRONTEND_URL || [
+      'https://oxyz-brand-app.vercel.app',
+      'http://localhost:3000',
+      'https://oxyz-brand-app.vercel.app/',
+    ],
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
     allowedHeaders: [
       'Origin',
@@ -32,6 +36,7 @@ async function bootstrap() {
       'Accept',
       'Authorization',
     ],
+    credentials: true,
   });
 
   // Set up global validation pipe
