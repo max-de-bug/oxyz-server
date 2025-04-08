@@ -1,0 +1,82 @@
+import { TypographyService } from './typography.service';
+import { UpdateTypographyDto } from './dto/update-typography.dto';
+import { CreateTypographyDto } from './dto/create-typography.dto';
+export declare class TypographyController {
+    private readonly typographyService;
+    constructor(typographyService: TypographyService);
+    getPublicTypography(): void;
+    getTypography(req: any): Promise<{
+        id: string;
+        userId: string | null;
+        name: string;
+        url: string;
+        filename: string;
+        mimeType: string;
+        size: number;
+        width: number | null;
+        height: number | null;
+        publicId: string | null;
+        isDefault: boolean | null;
+        createdAt: Date;
+        updatedAt: Date;
+    }[]>;
+    findOneFromCloudinary(publicId: string, req: any): Promise<{
+        id: string;
+        userId: string | null;
+        name: string;
+        url: string;
+        filename: string;
+        mimeType: string;
+        size: number;
+        width: number | null;
+        height: number | null;
+        publicId: string | null;
+        isDefault: boolean | null;
+        createdAt: Date;
+        updatedAt: Date;
+    } | {
+        id: any;
+        name: any;
+        url: any;
+        filename: any;
+        mimeType: string;
+        size: any;
+        width: any;
+        height: any;
+        publicId: any;
+        isDefault: boolean;
+        createdAt: any;
+        updatedAt: any;
+    }>;
+    create(file: Express.Multer.File, createTypographyDto: CreateTypographyDto, req: any): Promise<{
+        id: string;
+        userId: string | null;
+        name: string;
+        url: string;
+        filename: string;
+        mimeType: string;
+        size: number;
+        width: number | null;
+        height: number | null;
+        publicId: string | null;
+        isDefault: boolean | null;
+        createdAt: Date;
+        updatedAt: Date;
+    }>;
+    update(id: string, updateTypographyDto: UpdateTypographyDto, req: any): Promise<{
+        id: string;
+        userId: string | null;
+        name: string;
+        url: string;
+        filename: string;
+        mimeType: string;
+        size: number;
+        width: number | null;
+        height: number | null;
+        publicId: string | null;
+        isDefault: boolean | null;
+        createdAt: Date;
+        updatedAt: Date;
+    }>;
+    remove(id: string, req: any): Promise<import("postgres").RowList<never[]>>;
+}
