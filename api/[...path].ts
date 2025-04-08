@@ -1,23 +1,22 @@
 import { createProxyMiddleware } from 'http-proxy-middleware';
-import { NextApiRequest, NextApiResponse } from 'next';
+import type { NextApiRequest, NextApiResponse } from 'next';
+import type { IncomingMessage, ServerResponse } from 'http';
 
-// Create a proxy instance
+// Create a proxy instance with v3.x compatible options
 const apiProxy = createProxyMiddleware({
   target: 'http://localhost:3001',
   changeOrigin: true,
   pathRewrite: {
     '^/api/': '/',
   },
-  onProxyRes: (proxyRes) => {
-    // Add CORS headers to proxy response
-    proxyRes.headers['Access-Control-Allow-Origin'] =
-      'https://oxyz-brand-app.vercel.app';
-    proxyRes.headers['Access-Control-Allow-Methods'] =
-      'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS';
-    proxyRes.headers['Access-Control-Allow-Headers'] =
-      'X-Requested-With, X-HTTP-Method-Override, Content-Type, Accept, Authorization';
-    proxyRes.headers['Access-Control-Allow-Credentials'] = 'true';
+  headers: {
+    'Access-Control-Allow-Origin': 'https://oxyz-brand-app.vercel.app',
+    'Access-Control-Allow-Methods': 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+    'Access-Control-Allow-Headers':
+      'X-Requested-With, X-HTTP-Method-Override, Content-Type, Accept, Authorization',
+    'Access-Control-Allow-Credentials': 'true',
   },
+  selfHandleResponse: false, // Let the target server handle the response
 });
 
 // Export the API handler
@@ -42,7 +41,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
   }
 
   // Forward the request to the target API
-  return apiProxy(req, res);
+  return apiProxy(req as IncomingMessage, res as unknown as ServerResponse);
 }
 
 // Configure the API route handler
