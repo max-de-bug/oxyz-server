@@ -32,6 +32,7 @@ async function bootstrap() {
       'Accept',
       'Authorization',
     ],
+    credentials: true, // Allow credentials (cookies, authorization headers)
   });
 
   // Set up global validation pipe
