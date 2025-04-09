@@ -52,15 +52,10 @@ async function bootstrap() {
         },
     });
     app.enableCors({
-        origin: process.env.FRONTEND_URL,
-        methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-        allowedHeaders: [
-            'Origin',
-            'X-Requested-With',
-            'Content-Type',
-            'Accept',
-            'Authorization',
-        ],
+        origin: ['https://oxyz-brand-app.vercel.app', 'http://localhost:3000'],
+        methods: 'GET, HEAD, PUT, POST, DELETE, OPTIONS, PATCH',
+        credentials: true,
+        allowedHeaders: 'Origin, X-Requested-With, Content-Type, Accept, Authorization, Access-control-allow-credentials, Access-control-allow-headers, Access-control-allow-methods, Access-control-allow-origin, User-Agent, Referer, Accept-Encoding, Accept-Language, Access-Control-Request-Headers, Cache-Control, Pragma',
     });
     app.useGlobalPipes(new common_1.ValidationPipe({
         whitelist: true,
@@ -78,7 +73,7 @@ async function bootstrap() {
         .addBearerAuth()
         .build();
     const document = swagger_1.SwaggerModule.createDocument(app, config);
-    swagger_1.SwaggerModule.setup('api', app, document);
+    swagger_1.SwaggerModule.setup('api/docs', app, document);
     app.use(bodyParser.json({ limit: '50mb' }));
     app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
     await app.listen(3001, '0.0.0.0');
