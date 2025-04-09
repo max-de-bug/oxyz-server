@@ -4,7 +4,7 @@ import type { IncomingMessage, ServerResponse } from 'http';
 
 // Create a proxy instance with v3.x compatible options
 const apiProxy = createProxyMiddleware({
-  target: 'http://localhost:3001',
+  target: process.env.NEXT_PUBLIC_API_URL || 'https://oxyz-server.vercel.app',
   changeOrigin: true,
   pathRewrite: {
     '^/api/': '/',

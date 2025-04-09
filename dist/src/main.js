@@ -55,7 +55,9 @@ async function bootstrap() {
         origin: ['https://oxyz-brand-app.vercel.app', 'http://localhost:3000'],
         methods: 'GET, HEAD, PUT, POST, DELETE, OPTIONS, PATCH',
         credentials: true,
-        allowedHeaders: 'Origin, X-Requested-With, Content-Type, Accept, Authorization, Access-control-allow-credentials, Access-control-allow-headers, Access-control-allow-methods, Access-control-allow-origin, User-Agent, Referer, Accept-Encoding, Accept-Language, Access-Control-Request-Headers, Cache-Control, Pragma',
+        allowedHeaders: '*',
+        preflightContinue: false,
+        optionsSuccessStatus: 204,
     });
     app.useGlobalPipes(new common_1.ValidationPipe({
         whitelist: true,
