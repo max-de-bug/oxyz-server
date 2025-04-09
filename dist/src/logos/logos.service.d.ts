@@ -8,76 +8,76 @@ export declare class LogosService {
     constructor(drizzle: DrizzleService, cloudinary: CloudinaryService);
     findAll(userId: string, isDefault?: boolean): Promise<{
         id: string;
+        createdAt: Date;
+        updatedAt: Date;
         userId: string | null;
+        isDefault: boolean | null;
         url: string;
+        publicId: string | null;
         filename: string;
         mimeType: string;
-        publicId: string | null;
         size: number;
         width: number | null;
         height: number | null;
-        isDefault: boolean | null;
-        createdAt: Date;
-        updatedAt: Date;
     }[]>;
     findOne(id: string, userId: string): Promise<{
         id: string;
+        createdAt: Date;
+        updatedAt: Date;
         userId: string | null;
+        isDefault: boolean | null;
         url: string;
+        publicId: string | null;
         filename: string;
         mimeType: string;
-        publicId: string | null;
         size: number;
         width: number | null;
         height: number | null;
-        isDefault: boolean | null;
-        createdAt: Date;
-        updatedAt: Date;
     }>;
     create(file: Express.Multer.File, createLogoDto: CreateLogoDto, userId: string): Promise<{
         id: string;
+        createdAt: Date;
+        updatedAt: Date;
         userId: string | null;
+        isDefault: boolean | null;
         url: string;
+        publicId: string | null;
         filename: string;
         mimeType: string;
-        publicId: string | null;
         size: number;
         width: number | null;
         height: number | null;
-        isDefault: boolean | null;
-        createdAt: Date;
-        updatedAt: Date;
     }>;
     update(id: string, updateLogoDto: UpdateLogoDto, userId: string): Promise<{
         id: string;
+        createdAt: Date;
+        updatedAt: Date;
         userId: string | null;
+        isDefault: boolean | null;
         url: string;
+        publicId: string | null;
         filename: string;
         mimeType: string;
-        publicId: string | null;
         size: number;
         width: number | null;
         height: number | null;
-        isDefault: boolean | null;
-        createdAt: Date;
-        updatedAt: Date;
     }>;
     remove(id: string, userId: string): Promise<{
         success: boolean;
     }>;
     setDefault(id: string, userId: string): Promise<{
         id: string;
+        createdAt: Date;
+        updatedAt: Date;
         userId: string | null;
+        isDefault: boolean | null;
         url: string;
+        publicId: string | null;
         filename: string;
         mimeType: string;
-        publicId: string | null;
         size: number;
         width: number | null;
         height: number | null;
-        isDefault: boolean | null;
-        createdAt: Date;
-        updatedAt: Date;
     }>;
     findAllFromCloudinary(folder: string | undefined, userId: string, options?: {
         includeDefaults?: boolean;
@@ -95,17 +95,17 @@ export declare class LogosService {
         updatedAt: any;
     } | {
         id: string;
+        createdAt: Date;
+        updatedAt: Date;
         userId: string | null;
+        isDefault: boolean | null;
         url: string;
+        publicId: string | null;
         filename: string;
         mimeType: string;
-        publicId: string | null;
         size: number;
         width: number | null;
         height: number | null;
-        isDefault: boolean | null;
-        createdAt: Date;
-        updatedAt: Date;
     })[] | {
         resources: {
             id: any;
@@ -124,17 +124,17 @@ export declare class LogosService {
     }>;
     findOneFromCloudinary(publicId: string, userId: string): Promise<{
         id: string;
+        createdAt: Date;
+        updatedAt: Date;
         userId: string | null;
+        isDefault: boolean | null;
         url: string;
+        publicId: string | null;
         filename: string;
         mimeType: string;
-        publicId: string | null;
         size: number;
         width: number | null;
         height: number | null;
-        isDefault: boolean | null;
-        createdAt: Date;
-        updatedAt: Date;
     } | {
         id: any;
         url: any;

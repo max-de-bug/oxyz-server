@@ -73,13 +73,9 @@ export const verificationTokens = pgTable(
     token: text('token').notNull(),
     expires: timestamp('expires', { mode: 'date' }).notNull(),
   },
-  (verificationToken) => [
-    {
-      compositePk: primaryKey({
-        columns: [verificationToken.identifier, verificationToken.token],
-      }),
-    },
-  ],
+  (vt) => ({
+    pk: primaryKey(vt.identifier, vt.token),
+  }),
 );
 
 export const authenticators = pgTable(
@@ -96,13 +92,9 @@ export const authenticators = pgTable(
     credentialBackedUp: boolean('credentialBackedUp').notNull(),
     transports: text('transports'),
   },
-  (authenticator) => [
-    {
-      compositePK: primaryKey({
-        columns: [authenticator.userId, authenticator.credentialID],
-      }),
-    },
-  ],
+  (auth) => ({
+    pk: primaryKey(auth.userId, auth.credentialID),
+  }),
 );
 
 //-------------------- PRESETS

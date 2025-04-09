@@ -5,8 +5,10 @@ export declare class PresetsService {
     constructor(cloudinaryService: CloudinaryService);
     findAll(userId: string): Promise<{
         id: string;
-        userId: string | null;
         name: string;
+        createdAt: Date;
+        updatedAt: Date;
+        userId: string | null;
         filter: {
             brightness?: number;
             contrast?: number;
@@ -14,8 +16,6 @@ export declare class PresetsService {
             sepia?: number;
         } | null;
         isDefault: boolean | null;
-        createdAt: Date;
-        updatedAt: Date;
     }[]>;
     findAllFromCloudinary(folder: string | undefined, userId: string, options?: {
         includeDefaults?: boolean;
@@ -28,8 +28,10 @@ export declare class PresetsService {
     }>;
     findOne(id: string, userId: string): Promise<{
         id: string;
-        userId: string | null;
         name: string;
+        createdAt: Date;
+        updatedAt: Date;
+        userId: string | null;
         filter: {
             brightness?: number;
             contrast?: number;
@@ -37,13 +39,13 @@ export declare class PresetsService {
             sepia?: number;
         } | null;
         isDefault: boolean | null;
-        createdAt: Date;
-        updatedAt: Date;
     }>;
     create(createPresetDto: any, userId: string): Promise<{
         id: string;
-        userId: string | null;
         name: string;
+        createdAt: Date;
+        updatedAt: Date;
+        userId: string | null;
         filter: {
             brightness?: number;
             contrast?: number;
@@ -51,13 +53,13 @@ export declare class PresetsService {
             sepia?: number;
         } | null;
         isDefault: boolean | null;
-        createdAt: Date;
-        updatedAt: Date;
     }>;
     update(id: string, updatePresetDto: any, userId: string): Promise<{
         id: string;
-        userId: string | null;
         name: string;
+        createdAt: Date;
+        updatedAt: Date;
+        userId: string | null;
         filter: {
             brightness?: number;
             contrast?: number;
@@ -65,16 +67,16 @@ export declare class PresetsService {
             sepia?: number;
         } | null;
         isDefault: boolean | null;
-        createdAt: Date;
-        updatedAt: Date;
     }>;
     remove(id: string, userId: string): Promise<{
         id: string;
     }>;
     setDefault(id: string, userId: string): Promise<{
         id: string;
-        userId: string | null;
         name: string;
+        createdAt: Date;
+        updatedAt: Date;
+        userId: string | null;
         filter: {
             brightness?: number;
             contrast?: number;
@@ -82,7 +84,5 @@ export declare class PresetsService {
             sepia?: number;
         } | null;
         isDefault: boolean | null;
-        createdAt: Date;
-        updatedAt: Date;
     }>;
 }

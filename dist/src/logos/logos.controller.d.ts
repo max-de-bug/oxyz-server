@@ -17,17 +17,17 @@ export declare class LogosController {
         updatedAt: any;
     } | {
         id: string;
+        createdAt: Date;
+        updatedAt: Date;
         userId: string | null;
+        isDefault: boolean | null;
         url: string;
+        publicId: string | null;
         filename: string;
         mimeType: string;
-        publicId: string | null;
         size: number;
         width: number | null;
         height: number | null;
-        isDefault: boolean | null;
-        createdAt: Date;
-        updatedAt: Date;
     })[] | {
         resources: {
             id: any;
@@ -46,17 +46,17 @@ export declare class LogosController {
     }>;
     findOneFromCloudinary(publicId: string, req: any): Promise<{
         id: string;
+        createdAt: Date;
+        updatedAt: Date;
         userId: string | null;
+        isDefault: boolean | null;
         url: string;
+        publicId: string | null;
         filename: string;
         mimeType: string;
-        publicId: string | null;
         size: number;
         width: number | null;
         height: number | null;
-        isDefault: boolean | null;
-        createdAt: Date;
-        updatedAt: Date;
     } | {
         id: any;
         url: any;
@@ -72,31 +72,31 @@ export declare class LogosController {
     }>;
     findOne(id: string, req: any): Promise<{
         id: string;
+        createdAt: Date;
+        updatedAt: Date;
         userId: string | null;
+        isDefault: boolean | null;
         url: string;
+        publicId: string | null;
         filename: string;
         mimeType: string;
-        publicId: string | null;
         size: number;
         width: number | null;
         height: number | null;
-        isDefault: boolean | null;
-        createdAt: Date;
-        updatedAt: Date;
     }>;
     update(id: string, updateLogoDto: UpdateLogoDto, req: any): Promise<{
         id: string;
+        createdAt: Date;
+        updatedAt: Date;
         userId: string | null;
+        isDefault: boolean | null;
         url: string;
+        publicId: string | null;
         filename: string;
         mimeType: string;
-        publicId: string | null;
         size: number;
         width: number | null;
         height: number | null;
-        isDefault: boolean | null;
-        createdAt: Date;
-        updatedAt: Date;
     }>;
     remove(id: string, req: any): Promise<{
         success: boolean;

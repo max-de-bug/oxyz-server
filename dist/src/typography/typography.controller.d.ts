@@ -7,33 +7,33 @@ export declare class TypographyController {
     getPublicTypography(): void;
     getTypography(req: any): Promise<{
         id: string;
-        userId: string | null;
         name: string;
+        createdAt: Date;
+        updatedAt: Date;
+        userId: string | null;
+        isDefault: boolean | null;
         url: string;
+        publicId: string | null;
         filename: string;
         mimeType: string;
         size: number;
         width: number | null;
         height: number | null;
-        publicId: string | null;
-        isDefault: boolean | null;
-        createdAt: Date;
-        updatedAt: Date;
     }[]>;
     findOneFromCloudinary(publicId: string, req: any): Promise<{
         id: string;
-        userId: string | null;
         name: string;
+        createdAt: Date;
+        updatedAt: Date;
+        userId: string | null;
+        isDefault: boolean | null;
         url: string;
+        publicId: string | null;
         filename: string;
         mimeType: string;
         size: number;
         width: number | null;
         height: number | null;
-        publicId: string | null;
-        isDefault: boolean | null;
-        createdAt: Date;
-        updatedAt: Date;
     } | {
         id: any;
         name: any;
@@ -50,33 +50,33 @@ export declare class TypographyController {
     }>;
     create(file: Express.Multer.File, createTypographyDto: CreateTypographyDto, req: any): Promise<{
         id: string;
-        userId: string | null;
         name: string;
+        createdAt: Date;
+        updatedAt: Date;
+        userId: string | null;
+        isDefault: boolean | null;
         url: string;
+        publicId: string | null;
         filename: string;
         mimeType: string;
         size: number;
         width: number | null;
         height: number | null;
-        publicId: string | null;
-        isDefault: boolean | null;
-        createdAt: Date;
-        updatedAt: Date;
     }>;
     update(id: string, updateTypographyDto: UpdateTypographyDto, req: any): Promise<{
         id: string;
-        userId: string | null;
         name: string;
+        createdAt: Date;
+        updatedAt: Date;
+        userId: string | null;
+        isDefault: boolean | null;
         url: string;
+        publicId: string | null;
         filename: string;
         mimeType: string;
         size: number;
         width: number | null;
         height: number | null;
-        publicId: string | null;
-        isDefault: boolean | null;
-        createdAt: Date;
-        updatedAt: Date;
     }>;
     remove(id: string, req: any): Promise<import("postgres").RowList<never[]>>;
 }

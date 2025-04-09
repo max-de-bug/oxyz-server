@@ -54,7 +54,12 @@ async function bootstrap() {
     app.enableCors({
         origin: process.env.FRONTEND_URL || 'https://oxyz-brand-app.vercel.app',
         methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
-        allowedHeaders: ['Content-Type', 'Accept', 'Authorization'],
+        allowedHeaders: [
+            'Content-Type',
+            'Accept',
+            'Authorization',
+            'X-Requested-With',
+        ],
         credentials: true,
         preflightContinue: false,
         optionsSuccessStatus: 204,
@@ -78,7 +83,8 @@ async function bootstrap() {
     swagger_1.SwaggerModule.setup('api/docs', app, document);
     app.use(bodyParser.json({ limit: '50mb' }));
     app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
-    await app.listen(3001, '0.0.0.0');
+    const port = process.env.PORT || 3001;
+    await app.listen(port, '0.0.0.0');
     console.log(`Application is running on: ${await app.getUrl()}`);
 }
 bootstrap();
