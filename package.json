@@ -36,6 +36,7 @@
     "cloudinary": "^2.5.1",
     "dotenv": "^16.4.7",
     "drizzle-kit": "^0.30.5",
+    "drizzle-orm": "^0.30.10",
     "http-proxy-middleware": "^3.0.3",
     "jose": "^6.0.10",
     "jszip": "^3.10.1",
