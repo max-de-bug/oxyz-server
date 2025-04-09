@@ -21,17 +21,19 @@ async function bootstrap() {
     },
   });
 
-  // Enable CORS
+  // Enable CORS with more permissive settings for Vercel
   app.enableCors({
-    origin: process.env.FRONTEND_URL, // Add your frontend URL here
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+    origin: process.env.FRONTEND_URL || 'https://oxyz-brand-app.vercel.app',
+    methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
     allowedHeaders: [
-      'Origin',
-      'X-Requested-With',
       'Content-Type',
       'Accept',
       'Authorization',
+      'X-Requested-With',
     ],
+    credentials: true,
+    preflightContinue: false,
+    optionsSuccessStatus: 204,
   });
 
   // Set up global validation pipe
@@ -66,7 +68,8 @@ async function bootstrap() {
   app.use(bodyParser.json({ limit: '50mb' }));
   app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
 
-  await app.listen(3001, '0.0.0.0');
+  const port = process.env.PORT || 3001;
+  await app.listen(port, '0.0.0.0');
   console.log(`Application is running on: ${await app.getUrl()}`);
 }
 
