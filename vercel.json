@@ -12,11 +12,6 @@
   ],
   "routes": [
     {
-      "src": "/api/users/defaults/image",
-      "methods": ["OPTIONS"],
-      "dest": "/api/cors-preflight.js"
-    },
-    {
       "src": "/api/(.*)",
       "methods": ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
       "headers": {

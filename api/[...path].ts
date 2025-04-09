@@ -4,19 +4,30 @@ import type { IncomingMessage, ServerResponse } from 'http';
 
 // Create a proxy instance with v3.x compatible options
 const apiProxy = createProxyMiddleware({
-  target: process.env.NEXT_PUBLIC_API_URL || 'https://oxyz-server.vercel.app',
+  target: 'http://localhost:3001', // Local NestJS server
   changeOrigin: true,
   pathRewrite: {
-    '^/api/': '/',
+    '^/api/': '/api/', // Keep the /api/ prefix
   },
-  headers: {
-    'Access-Control-Allow-Origin': 'https://oxyz-brand-app.vercel.app',
-    'Access-Control-Allow-Methods': 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
-    'Access-Control-Allow-Headers':
-      'X-Requested-With, X-HTTP-Method-Override, Content-Type, Accept, Authorization',
-    'Access-Control-Allow-Credentials': 'true',
+  // Use the correct property for response handling in v3.x
+  on: {
+    proxyRes: (
+      proxyRes: IncomingMessage,
+      req: IncomingMessage,
+      res: ServerResponse,
+    ) => {
+      // Add CORS headers to the proxy response
+      if (proxyRes.headers) {
+        proxyRes.headers['Access-Control-Allow-Origin'] =
+          'https://oxyz-brand-app.vercel.app';
+        proxyRes.headers['Access-Control-Allow-Methods'] =
+          'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS';
+        proxyRes.headers['Access-Control-Allow-Headers'] =
+          'X-Requested-With, X-HTTP-Method-Override, Content-Type, Accept, Authorization';
+        proxyRes.headers['Access-Control-Allow-Credentials'] = 'true';
+      }
+    },
   },
-  selfHandleResponse: false, // Let the target server handle the response
 });
 
 // Export the API handler
@@ -39,6 +50,9 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
     res.status(200).end();
     return;
   }
+
+  // Log the request for debugging
+  console.log(`Proxying request to: ${req.url}`);
 
   // Forward the request to the target API
   return apiProxy(req as IncomingMessage, res as unknown as ServerResponse);
