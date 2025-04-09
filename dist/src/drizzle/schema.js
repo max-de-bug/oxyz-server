@@ -27,7 +27,6 @@ exports.accounts = (0, pg_core_1.pgTable)('account', {
     userId: (0, pg_core_1.text)('userId')
         .notNull()
         .references(() => exports.users.id, { onDelete: 'cascade' }),
-    type: (0, pg_core_1.text)('type').$type().notNull(),
     provider: (0, pg_core_1.text)('provider').notNull(),
     providerAccountId: (0, pg_core_1.text)('providerAccountId').notNull(),
     refresh_token: (0, pg_core_1.text)('refresh_token'),

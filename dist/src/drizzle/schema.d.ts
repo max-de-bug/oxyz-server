@@ -1,4 +1,3 @@
-import type { AdapterAccount } from 'next-auth/adapters';
 export declare const db: import("drizzle-orm/postgres-js").PostgresJsDatabase<Record<string, never>>;
 export declare const users: import("drizzle-orm/pg-core").PgTableWithColumns<{
     name: "user";
@@ -101,18 +100,6 @@ export declare const accounts: import("drizzle-orm/pg-core").PgTableWithColumns<
             dataType: "string";
             columnType: "PgText";
             data: string;
-            driverParam: string;
-            notNull: true;
-            hasDefault: false;
-            enumValues: [string, ...string[]];
-            baseColumn: never;
-        }, {}, {}>;
-        type: import("drizzle-orm/pg-core").PgColumn<{
-            name: "type";
-            tableName: "account";
-            dataType: "string";
-            columnType: "PgText";
-            data: AdapterAccount;
             driverParam: string;
             notNull: true;
             hasDefault: false;

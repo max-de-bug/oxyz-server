@@ -21,9 +21,28 @@ async function bootstrap() {
     },
   });
 
-  // Enable CORS with more permissive settings for Vercel
+  // Get allowed origins from environment or use defaults
+  const allowedOrigins = process.env.ALLOWED_ORIGINS
+    ? process.env.ALLOWED_ORIGINS.split(',')
+    : ['https://oxyz-brand-app.vercel.app', 'http://localhost:3000'];
+
+  // Enable CORS with more permissive settings for both production and development
   app.enableCors({
-    origin: process.env.FRONTEND_URL || 'https://oxyz-brand-app.vercel.app',
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps or curl requests)
+      if (!origin) return callback(null, true);
+
+      // Check if the origin is in the allowed list
+      if (
+        allowedOrigins.indexOf(origin) !== -1 ||
+        process.env.NODE_ENV !== 'production'
+      ) {
+        callback(null, true);
+      } else {
+        logger.warn(`Blocked request from origin: ${origin}`);
+        callback(new Error('Not allowed by CORS'), false);
+      }
+    },
     methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
     allowedHeaders: [
       'Content-Type',

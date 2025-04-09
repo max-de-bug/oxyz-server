@@ -8,7 +8,7 @@ export declare class HealthController {
         status: string;
         timestamp: string;
         service: string;
-        environment: "development" | "production" | "test";
+        environment: string;
         version: string;
     };
 }

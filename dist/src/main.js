@@ -51,8 +51,22 @@ async function bootstrap() {
             });
         },
     });
+    const allowedOrigins = process.env.ALLOWED_ORIGINS
+        ? process.env.ALLOWED_ORIGINS.split(',')
+        : ['https://oxyz-brand-app.vercel.app', 'http://localhost:3000'];
     app.enableCors({
-        origin: process.env.FRONTEND_URL || 'https://oxyz-brand-app.vercel.app',
+        origin: (origin, callback) => {
+            if (!origin)
+                return callback(null, true);
+            if (allowedOrigins.indexOf(origin) !== -1 ||
+                process.env.NODE_ENV !== 'production') {
+                callback(null, true);
+            }
+            else {
+                logger.warn(`Blocked request from origin: ${origin}`);
+                callback(new Error('Not allowed by CORS'), false);
+            }
+        },
         methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
         allowedHeaders: [
             'Content-Type',
