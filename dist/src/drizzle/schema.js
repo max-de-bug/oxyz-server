@@ -53,13 +53,9 @@ exports.verificationTokens = (0, pg_core_1.pgTable)('verificationToken', {
     identifier: (0, pg_core_1.text)('identifier').notNull(),
     token: (0, pg_core_1.text)('token').notNull(),
     expires: (0, pg_core_1.timestamp)('expires', { mode: 'date' }).notNull(),
-}, (verificationToken) => [
-    {
-        compositePk: (0, pg_core_1.primaryKey)({
-            columns: [verificationToken.identifier, verificationToken.token],
-        }),
-    },
-]);
+}, (vt) => ({
+    pk: (0, pg_core_1.primaryKey)(vt.identifier, vt.token),
+}));
 exports.authenticators = (0, pg_core_1.pgTable)('authenticator', {
     credentialID: (0, pg_core_1.text)('credentialID').notNull().unique(),
     userId: (0, pg_core_1.text)('userId')
@@ -71,13 +67,9 @@ exports.authenticators = (0, pg_core_1.pgTable)('authenticator', {
     credentialDeviceType: (0, pg_core_1.text)('credentialDeviceType').notNull(),
     credentialBackedUp: (0, pg_core_1.boolean)('credentialBackedUp').notNull(),
     transports: (0, pg_core_1.text)('transports'),
-}, (authenticator) => [
-    {
-        compositePK: (0, pg_core_1.primaryKey)({
-            columns: [authenticator.userId, authenticator.credentialID],
-        }),
-    },
-]);
+}, (auth) => ({
+    pk: (0, pg_core_1.primaryKey)(auth.userId, auth.credentialID),
+}));
 exports.presets = (0, pg_core_1.pgTable)('presets', {
     id: (0, pg_core_1.uuid)('id').defaultRandom().primaryKey(),
     userId: (0, pg_core_1.text)('userId').references(() => exports.users.id, { onDelete: 'cascade' }),
