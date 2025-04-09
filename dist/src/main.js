@@ -52,10 +52,10 @@ async function bootstrap() {
         },
     });
     app.enableCors({
-        origin: ['https://oxyz-brand-app.vercel.app', 'http://localhost:3000'],
-        methods: 'GET, HEAD, PUT, POST, DELETE, OPTIONS, PATCH',
+        origin: process.env.FRONTEND_URL || 'https://oxyz-brand-app.vercel.app',
+        methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
+        allowedHeaders: ['Content-Type', 'Accept', 'Authorization'],
         credentials: true,
-        allowedHeaders: '*',
         preflightContinue: false,
         optionsSuccessStatus: 204,
     });

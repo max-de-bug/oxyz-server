@@ -4,20 +4,32 @@
     {
       "src": "dist/main.js",
       "use": "@vercel/node"
+    },
+    {
+      "src": "api/**/*.js",
+      "use": "@vercel/node"
     }
   ],
   "routes": [
     {
-      "src": "/(.*)",
-      "dest": "dist/main.js",
+      "src": "/api/users/defaults/image",
+      "methods": ["OPTIONS"],
+      "dest": "/api/cors-preflight.js"
+    },
+    {
+      "src": "/api/(.*)",
       "methods": ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
       "headers": {
         "Access-Control-Allow-Origin": "https://oxyz-brand-app.vercel.app",
         "Access-Control-Allow-Methods": "GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS",
         "Access-Control-Allow-Headers": "*",
-        "Access-Control-Allow-Credentials": "true",
-        "Access-Control-Max-Age": "86400"
-      }
+        "Access-Control-Allow-Credentials": "true"
+      },
+      "dest": "dist/main.js"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "dist/main.js"
     }
   ]
 }
