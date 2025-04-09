@@ -12,6 +12,8 @@ import { PresetsModule } from './presets/presets.module';
 import { TypographyModule } from './typography/typography.module';
 import { UsersModule } from './users/users.module';
 import { FiltersModule } from './filters/filters.module';
+import { HealthModule } from './health/health.module';
+
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -27,6 +29,7 @@ import { FiltersModule } from './filters/filters.module';
     TypographyModule,
     UsersModule,
     FiltersModule,
+    HealthModule,
   ],
   controllers: [AppController],
   providers: [AppService],

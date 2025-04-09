@@ -21,6 +21,7 @@ const presets_module_1 = require("./presets/presets.module");
 const typography_module_1 = require("./typography/typography.module");
 const users_module_1 = require("./users/users.module");
 const filters_module_1 = require("./filters/filters.module");
+const health_module_1 = require("./health/health.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -40,6 +41,7 @@ exports.AppModule = AppModule = __decorate([
             typography_module_1.TypographyModule,
             users_module_1.UsersModule,
             filters_module_1.FiltersModule,
+            health_module_1.HealthModule,
         ],
         controllers: [app_controller_1.AppController],
         providers: [app_service_1.AppService],
