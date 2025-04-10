@@ -24,7 +24,7 @@ async function bootstrap() {
   // Get allowed origins from environment or use defaults
   const allowedOrigins = process.env.ALLOWED_ORIGINS
     ? process.env.ALLOWED_ORIGINS.split(',')
-    : ['https://www.oxyzdesigner.xyz/', 'http://localhost:3000'];
+    : ['https://www.oxyzdesigner.xyz', 'http://localhost:3000'];
 
   // Enable CORS with more permissive settings for both production and development
   app.enableCors({
