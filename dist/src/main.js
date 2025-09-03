@@ -53,7 +53,7 @@ async function bootstrap() {
     });
     const allowedOrigins = process.env.ALLOWED_ORIGINS
         ? process.env.ALLOWED_ORIGINS.split(',')
-        : ['https://oxyz-brand-app.vercel.app', 'http://localhost:3000'];
+        : ['https://www.oxyzdesigner.xyz', 'http://localhost:3000'];
     app.enableCors({
         origin: (origin, callback) => {
             if (!origin)

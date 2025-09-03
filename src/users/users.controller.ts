@@ -8,8 +8,11 @@ import {
   Patch,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { AuthenticatedUser } from '../auth/interfaces/user.interface';
 import { SupabaseAuthGuard, Public } from '../auth/guards/auth.guard';
 import { Request } from 'express';
+import { UpdateUsernameDto } from './dto/update-username.dto';
 
 @Controller('users')
 @UseGuards(SupabaseAuthGuard)
@@ -42,14 +45,13 @@ export class UsersController {
 
   @Patch('username')
   async updateUsername(
-    @Req() req: Request,
-    @Body() body: { username: string },
+    @Body() body: UpdateUsernameDto,
+    @CurrentUser() user: AuthenticatedUser,
   ) {
-    const userId = req.user ? req.user['id'] || 'unknown' : 'unknown';
     this.logger.log(
-      `Updating username for user: ${userId} to ${body.username}`,
+      `Updating username for user: ${user.id} to ${body.username}`,
     );
-    return this.usersService.updateUsername(userId, body.username);
+    return this.usersService.updateUsername(user.id, body.username);
   }
 
   @Public()
